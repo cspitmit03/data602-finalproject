@@ -26,6 +26,16 @@ BikeOnlyCols = ["Date", "BTotal", "BikeNB", "BikeSB"]
 # Column list for later use in reordering columns for ped & bike counters
 PBColOrder = ["Date","BTotal", "PBTotal", "PedNB", "PedSB", "BikeNB", "BikeSB"]
 
+# Grab the datasets
+weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
+weatherDF = pd.read_csv(weatherPath)
+
+totalPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/totalDF.csv"
+totalDF = pd.read_csv(totalPath)
+
+dailyPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/dailyDF.csv"
+dailyDF = pd.read_csv(dailyPath)
+
 # Get JSON files of a single counter; 
 # "counter" is the name of a counter, a string, like "BGT"
 def getJSON(counter):
@@ -40,8 +50,6 @@ def getRawData():
     for i in range(len(Counters)):
         dfList.append(getJSON(Counters[i]))
     return dfList
-
-
 
 def modifyData(dfList):
     for i in range(len(Counters)):
@@ -95,7 +103,20 @@ def getTotalDF(dfList):
     # Sort entries by date
     totalDF = totalDF.sort_values('Date')
     
+    # Convert date column to index
+    totalDF.index = totalDF["Date"]
+    totalDF = totalDF.iloc[:, 1:]
+    
     return totalDF
+
+def getDailyDF(df):
+    # Create dataframe that displays daily totals by counter
+    #Convert date and time to just date
+    df.index = pd.DatetimeIndex(df.index).normalize()
+    # Aggregate total rides for each day and counter
+    df = df.groupby(pd.DatetimeIndex(df.index)).sum()
+    
+    return df
 
 def subsetDate(begin, end, df):
     # Return dataframe that is within the date bounds specified, in m/D/Y 
@@ -137,9 +158,18 @@ def subsetWeekday(daylist, df):
     df[df.index.weekday.isin(daylist)]
     return df
 
-raw = getRawData()
-dfList = raw.copy()
-dfList = modifyData(dfList)
-totalDF = getTotalDF(dfList)
-path = r"C:\Users\asher\Documents\GitHub\data602-finalproject\totalDF.csv"
-totalDF.to_csv(path)
+# Update Bike Counts (to be performed monthly, followed by a push to github)
+def updateData():
+    raw = getRawData()
+    dfList = raw.copy()
+    dfList = modifyData(dfList)
+    totalDF = getTotalDF(dfList)
+    dailyDF = getDailyDF(totalDF)
+    
+    totalPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\totalDF.csv"
+    dailyPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\dailyDF.csv"
+    
+    totalDF.to_csv(totalPath)
+    dailyDF.to_csv(dailyPath)
+    
+    return
