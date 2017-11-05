@@ -97,9 +97,49 @@ def getTotalDF(dfList):
     
     return totalDF
 
+def subsetDate(begin, end, df):
+    # Return dataframe that is within the date bounds specified, in m/D/Y 
+    # format
+    begin = datetime.strptime(begin, '%m/%d/%Y').date()
+    begin = begin.strftime('%Y%m%d')
+    end = datetime.strptime(end, '%m/%d/%Y').date()
+    end = end.strftime('%Y%m%d')
+    
+    return df[begin:end]
+
+def subsetTime(begin, end, df):
+    # Return dataframe within the times specified, in 24 hour format
+    # e.g. begin = '12:00', end = '13:00'
+    df = df.between_time(begin, end)
+    return df
+    
+def subsetWeather(weather, df):
+    # Return dataframe that has the specified weather
+    # Options: Sunny, cloudy, rain, storm
+    if weather == "All":
+        return df
+    else:
+        return df[df.Weather == weather]
+
+'''def subsetSeason(season, df):
+    # Return dataframe that has the specified season
+    # Options: Spring, Summer, Fall, Winter, All
+    return df'''
+
+def subsetTemp(low, high, df):
+    # Return dataframe containing only days where average temp is within bounds
+    # specified
+    return df[df.Temp >= low and df.Temp  <= high]
+
+def subsetWeekday(daylist, df):
+    # Return dataframe containing only the days of the week specified,
+    # where 0 = Monday, 1 = Tuesday, etc.
+    df[df.index.weekday.isin(daylist)]
+    return df
+
 raw = getRawData()
 dfList = raw.copy()
 dfList = modifyData(dfList)
 totalDF = getTotalDF(dfList)
-path = r"C:\Users\asher\Documents\Classes\CUNY\DATA 602\Final Project\TotalDF.csv"
+path = r"C:\Users\asher\Documents\GitHub\data602-finalproject\totalDF.csv"
 totalDF.to_csv(path)
