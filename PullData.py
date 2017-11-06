@@ -30,38 +30,36 @@ PBColOrder = ["Date","BTotal", "PBTotal", "PedNB", "PedSB", "BikeNB", "BikeSB"]
 
 # Grab the datasets
 weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
-weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\weatherDF.csv"
 weatherDF = pd.read_csv(weatherPath, index_col = 0)
-Indx = [] # Index to house
+Indx = [] # Index to house dates
 for i in range(len(weatherDF)): 
     Indx.append(datetime.strptime(weatherDF.index[i], '%Y-%m-%d').date())
 weatherDF.index = Indx
 
-Indx = [] # Index to house
-for i in range(len(dailyDF)): 
-    Indx.append(datetime.strptime(dailyDF.index[i], '%Y-%M-%d').date())
-dailyDF.index = Indx
+
 
 totalPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/TotalDF.csv"
 totalDF = pd.read_csv(totalPath)
 
 dailyPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/dailyDF.csv"
 dailyDF = pd.read_csv(dailyPath)
+dailyDF.index = dailyDF["Date"]
+del dailyDF["Date"]
+
+Indx = [] # Index to house dates
+for i in range(len(dailyDF)): 
+    Indx.append(datetime.strptime(dailyDF.index[i], '%Y-%m-%d').date())
+dailyDF.index = Indx
 
 '''
 sunsAndBoolsDF = getSunsAndBools()
+
+FremontDF = pd.concat([dailyDF["Fre"], sunsAndBoolsDF, weatherDF], axis = 1)
 
 FremontPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\FremontAndPredictors.csv"
         
 FremontDF.to_csv(FremontPath)
 '''
-
-FremontDF = dailyDF["Fre"] + sunsAndBoolsDF + weatherDF
-FremontDF = pd.concat([dailyDF["Fre"], sunsAndBoolsDF, weatherDF], axis = 1)
-FremontDF = pd.concat([sunsAndBoolsDF, weatherDF], axis = 1)
-FremontDF = pd.concat([dailyDF["Fre"], sunsAndBoolsDF], axis = 1)
-#dailyDF.index = dailyDF["Date"]
-#del dailyDF["Date"]
 
 
 def getSunsAndBools(end = datetime(2017, 10, 31)):
@@ -103,13 +101,13 @@ def getSunsAndBools(end = datetime(2017, 10, 31)):
     
     SunsAndBools = pd.DataFrame({'Sunlight': sunlight,
                                 'isMay': isMay,
-                                'Monday': weekday[0],
-                                'Tuesday':weekday[1],
-                                'Wednesday': weekday[2],
-                                'Thursday': weekday[3],
-                                'Friday': weekday[4],
-                                'Saturday': weekday[5],
-                                'Sunday': weekday[6]}, index = dateList)
+                                'Monday': weekdays[0],
+                                'Tuesday':weekdays[1],
+                                'Wednesday': weekdays[2],
+                                'Thursday': weekdays[3],
+                                'Friday': weekdays[4],
+                                'Saturday': weekdays[5],
+                                'Sunday': weekdays[6]}, index = dateList)
     
     # Sunlight code is courtesy of Jake Vanderplas, an astronomy PHD who literally wrote 
     # the book on data science for Python, and also investigated Seattle cycling: 
