@@ -1,19 +1,19 @@
 import urllib.request, json 
 import pandas as pd
-import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 import numpy as np
+import calendar
 # from pd.io.json import json_normalize
 
 # Dictionary of Counters and their JSON file location
 urlDict = {"BGT": "https://data.seattle.gov/api/views/2z5v-ecg8/rows.json?accessType=DOWNLOAD",
            "Broad": "https://data.seattle.gov/api/views/j4vh-b42a/rows.json?accessType=DOWNLOAD",
-           "Ell": "https://data.seattle.gov/api/views/4qej-qvrz/rows.json?accessType=DOWNLOAD",
-           "Fre": "https://data.seattle.gov/api/views/65db-xm6k/rows.json?accessType=DOWNLOAD",
+           "Elliot": "https://data.seattle.gov/api/views/4qej-qvrz/rows.json?accessType=DOWNLOAD",
+           "Fremont": "https://data.seattle.gov/api/views/65db-xm6k/rows.json?accessType=DOWNLOAD",
            "MTS": "https://data.seattle.gov/api/views/u38e-ybnc/rows.json?accessType=DOWNLOAD",
            "NW58": "https://data.seattle.gov/api/views/47yq-6ugv/rows.json?accessType=DOWNLOAD",   
-           "Sec": "https://data.seattle.gov/api/views/avwm-i8ym/rows.json?accessType=DOWNLOAD",
-           "Spok": "https://data.seattle.gov/api/views/upms-nr8w/rows.json?accessType=DOWNLOAD",
+           "Second": "https://data.seattle.gov/api/views/avwm-i8ym/rows.json?accessType=DOWNLOAD",
+           "Spokane": "https://data.seattle.gov/api/views/upms-nr8w/rows.json?accessType=DOWNLOAD",
            "Thirty": "https://data.seattle.gov/api/views/3h7e-f49s/rows.json?accessType=DOWNLOAD",
            "TwoSix": "https://data.seattle.gov/api/views/mefu-7eau/rows.json?accessType=DOWNLOAD"
            }
@@ -30,7 +30,17 @@ PBColOrder = ["Date","BTotal", "PBTotal", "PedNB", "PedSB", "BikeNB", "BikeSB"]
 
 # Grab the datasets
 weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
-weatherDF = pd.read_csv(weatherPath)
+weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\weatherDF.csv"
+weatherDF = pd.read_csv(weatherPath, index_col = 0)
+Indx = [] # Index to house
+for i in range(len(weatherDF)): 
+    Indx.append(datetime.strptime(weatherDF.index[i], '%Y-%m-%d').date())
+weatherDF.index = Indx
+
+Indx = [] # Index to house
+for i in range(len(dailyDF)): 
+    Indx.append(datetime.strptime(dailyDF.index[i], '%Y-%M-%d').date())
+dailyDF.index = Indx
 
 totalPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/TotalDF.csv"
 totalDF = pd.read_csv(totalPath)
@@ -38,16 +48,31 @@ totalDF = pd.read_csv(totalPath)
 dailyPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/dailyDF.csv"
 dailyDF = pd.read_csv(dailyPath)
 
-def HoursDaylight(end):
+'''
+sunsAndBoolsDF = getSunsAndBools()
+
+FremontPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\FremontAndPredictors.csv"
+        
+FremontDF.to_csv(FremontPath)
+'''
+
+FremontDF = dailyDF["Fre"] + sunsAndBoolsDF + weatherDF
+FremontDF = pd.concat([dailyDF["Fre"], sunsAndBoolsDF, weatherDF], axis = 1)
+FremontDF = pd.concat([sunsAndBoolsDF, weatherDF], axis = 1)
+FremontDF = pd.concat([dailyDF["Fre"], sunsAndBoolsDF], axis = 1)
+#dailyDF.index = dailyDF["Date"]
+#del dailyDF["Date"]
+
+
+def getSunsAndBools(end = datetime(2017, 10, 31)):
 
     # Create a list containing all dates
-    start = datetime.datetime(2012, 10, 3) # First day of data
-    end = datetime.datetime(2017, 10, 31)
+    start = datetime(2012, 10, 3) # First day of data
     duration = (end - start).days + 1 # length of duration in days
     
     dateList = []
     for i in range(duration):
-        dateList.append(start + timedelta(days=i))
+        dateList.append((start + timedelta(days=i)).date())
         
     axis = 23.44
     latitude = 47.61
@@ -56,7 +81,7 @@ def HoursDaylight(end):
     # for each date
     sunlight = []
     for i in range(duration):
-        day = (dateList[i] - pd.datetime(2000, 12, 21)).days # difference in days
+        day = (dateList[i] - pd.datetime(2000, 12, 21).date()).days # difference in days
         day %= 365.25
         m = 1. - np.tan(np.radians(latitude)) * np.tan(np.radians(axis) * np.cos(day * np.pi / 182.625))
         m = max(0, min(m, 2))
@@ -87,7 +112,7 @@ def HoursDaylight(end):
                                 'Sunday': weekday[6]}, index = dateList)
     
     # Sunlight code is courtesy of Jake Vanderplas, an astronomy PHD who literally wrote 
-    # the book on data science for Python: 
+    # the book on data science for Python, and also investigated Seattle cycling: 
     # http://jakevdp.github.io/blog/2014/06/10/is-seattle-really-seeing-an-uptick-in-cycling/
     
     return SunsAndBools
@@ -163,7 +188,7 @@ def getTotalDF(dfList):
     
     # Convert date column to index
     totalDF.index = totalDF["Date"]
-    totalDF = totalDF.iloc[:, 1:]
+    del totalDF["Date"]
     
     return totalDF
 
@@ -245,14 +270,34 @@ def updateData():
     dailyDF.to_csv(dailyPath)
     
     # Update weatherCSV manually, then add dummy variables
-    '''Manually scrape WeatherUndeground for most recent full month'''
+    '''Manually scrape WeatherUndeground for most recent full month 
+    from WeatherURL'''
+    now = datetime.now()
+    if now.month == 1: 
+        lastMonth = 12
+        year = now.year - 1
+    else: 
+        lastMonth = now.month - 1
+        year = now.year
+    daysInMonth = calendar.monthrange(year, lastMonth)[1]
+    WeatherURL =  "https://www.wunderground.com/history/airport/KBFI/" + str(year) + "/" + str(lastMonth) + "/1/CustomHistory.html?dayend=" + str(daysInMonth) + "&monthend=" + str(lastMonth) + "&yearend=" + str(year) + "&req_city=&req_state=&req_statename=&reqdb.zip=&reqdb.magic=&reqdb.wmo="
+    print(WeatherURL)
+    
     weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\weatherDF.csv"
     weatherDF = pd.read_csv(weatherPath, index_col = 0)
-    weatherDF = addWeatherDummies(weatherDF) 
+    weatherDF = addWeatherDummies(weatherDF) # Create new Weather DF with dummy variables, like DidRain
     weatherDummyPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\weatherDummyDF.csv"
     weatherDF.to_csv(weatherDummyPath)
     
     return
 
-
+def get10DayForecast():
+    URL = "http://api.wunderground.com/api/91468d8e9a46ecc5/forecast10day/q/WA/Seattle.json"
+    with urllib.request.urlopen(URL) as url:
+        forecastList = json.loads(url.read().decode())["forecast"]["simpleforecast"]["forecastday"]
+    
+    
+    for i in range(len(forecastList)):
+        del forecastList[i]["date"]
+    
 
