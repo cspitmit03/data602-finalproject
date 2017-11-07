@@ -21,10 +21,6 @@ urlDict = {"BGT": "https://data.seattle.gov/api/views/2z5v-ecg8/rows.json?access
 Counters = list(urlDict.keys())
 Counters.sort()
 
-# Column names for Pedestrian + Bike Counters, and Bike-only counters
-PedBikeCols = ["Date", "PBTotal", "PedNB", "PedSB", "BikeNB", "BikeSB"]
-BikeOnlyCols = ["Date", "BTotal", "BikeNB", "BikeSB"]
-
 # Column list for later use in reordering columns for ped & bike counters
 PBColOrder = ["Date","BTotal", "PBTotal", "PedNB", "PedSB", "BikeNB", "BikeSB"]
 
@@ -133,6 +129,7 @@ def getRawData():
 
 
 def modifyData(dfList):
+    
     for i in range(len(Counters)):
   
         # Remove entries with null values (these were defective observations)
@@ -145,42 +142,53 @@ def modifyData(dfList):
         # Rename columns, according to whether they are bike-only or ped & bike
         # counters; Fremont Bridge (i = 3) lacked a total column, so is treated 
         # separately here
-        if len(dfList[i].columns) == 3:
+        if len(dfList[i].columns) == 3: #Fremont has no total column
             dfList[i].columns = ["Date", "BikeNB", "BikeSB"]
-            dfList[i]["BTotal"] = dfList[i]["BikeNB"] + dfList[i]["BikeSB"]
-            dfList[i] = dfList[i][["Date", "BTotal", "BikeNB", "BikeSB"]]
-        elif len(dfList[i].columns) == 4:
-            dfList[i].columns = BikeOnlyCols
-        elif len(dfList[i].columns) == 6:
-            dfList[i].columns = PedBikeCols
-            dfList[i]["BTotal"] = dfList[i]["BikeNB"] + dfList[i]["BikeSB"]
-            dfList[i] = dfList[i][PBColOrder]
-        
+            dfList[i][Counters[i]] = dfList[i]["BikeNB"] + dfList[i]["BikeSB"]
+        elif len(dfList[i].columns) == 4: # For bike only counters
+            dfList[i].columns = ["Date", Counters[i], "BikeNB", "BikeSB"]
+        elif len(dfList[i].columns) == 6: # For bike and ped counters
+            dfList[i].columns = ["Date", "PBTotal", "PedNB", "PedSB", "BikeNB", "BikeSB"]
+            dfList[i][Counters[i]] = dfList[i]["BikeNB"] + dfList[i]["BikeSB"]
+             
         # Convert date strings to timestamp objects
-        dfList[i].Date = pd.Series(
-                [pd.to_datetime(date, 
-                format = '%Y-%m-%dT%H:%M:%S') for date in dfList[i].Date])
+        dfList[i].index = pd.to_datetime(dfList[i]["Date"], format = '%Y-%m-%dT%H:%M:%S')
+        dfList[i] = dfList[i][[Counters[i]]]
+    
+    # Create a data frame whose index is the complete date list    
+    totalDF = pd.DataFrame(index = dfList[3].index)
+    
+    # Join all the counter data on dates. Note, this counter data only includes bike totals
+    totalDF = totalDF.join(dfList, how = 'outer')
     # Remove entries with null values, these are defective observations
     # For some reason, putting this in the main loop caused a crash every time
-    for i in range(len(Counters)):
-        dfList[i] = dfList[i][pd.notnull(dfList[i].iloc[:, 1])]
-    return dfList
+    #for i in range(len(Counters)):
+    #    dfList[i] = dfList[i][pd.notnull(dfList[i]["BTotal"])]
+    return totalDF
 
-def getTotalDF(dfList):
-    totalDF = pd.DataFrame({})
-    for i in range(len(dfList)):
+'''def getTotalDF(dfList):
+    totalDFf = pd.DataFrame({})
+    
+    #for i in range(len(dfList)):
         
         # Rename BTotal column to Counter name, and remove columns after
-        dfList[i] = dfList[i].rename(columns = {'BTotal':Counters[i]})
-        dfList[i] = dfList[i].iloc[:, 0:2]
+    #    dfList[i] = dfList[i].rename(columns = {'BTotal':Counters[i]})
+    #    dfList[i] = dfList[i].iloc[:, 0:2]
     
     # Use longest-running counter (Fremont, i = 3) to create a dates column    
-    totalDF = pd.DataFrame({'Date': dfList[3].Date})
+    result = pd.DataFrame(index = dfList[3].Date)
+    
+    
     
     # Merge values into date dataframe
     for i in range(len(dfList)):    
-        totalDF = pd.merge(totalDF, dfList[i], on='Date', how='outer') 
-    
+        #totalDFf[Counters[i]] = dfList[i][Counters[i]]
+        #df = pd.merge(totalDFf, dfList[i], how='outer', on=[totalDFf.index, dfList[i]["Date"])
+        df = dfList[i].copy()
+        df.index = df["Date"]
+        del df["Date"]
+        result.join(df, how = "outer")
+        
     # Sort entries by date
     totalDF = totalDF.sort_values('Date')
     
@@ -188,7 +196,7 @@ def getTotalDF(dfList):
     totalDF.index = totalDF["Date"]
     del totalDF["Date"]
     
-    return totalDF
+    return totalDF'''
 
 def getDailyDF(df):
     # Create dataframe that displays daily totals by counter
@@ -257,8 +265,7 @@ def updateData():
     # Pull data from Seattle data portal, then write to local Github repo
     raw = getRawData()
     dfList = raw.copy()
-    dfList = modifyData(dfList)
-    totalDF = getTotalDF(dfList)
+    totalDF = modifyData(dfList)
     dailyDF = getDailyDF(totalDF)
     
     totalPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\totalDF.csv"
