@@ -50,7 +50,7 @@ dailyDF.index = Indx
 '''
 sunsAndBoolsDF = getSunsAndBools()
 
-FremontDF = pd.concat([dailyDF["Fre"], sunsAndBoolsDF, weatherDF], axis = 1)
+FremontDF = pd.concat([dailyDF["Fremont"], sunsAndBoolsDF, weatherDF], axis = 1)
 
 FremontPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\FremontAndPredictors.csv"
         
@@ -130,36 +130,51 @@ def getRawData():
 
 def modifyData(dfList):
     
+    newList = []
     for i in range(len(Counters)):
-  
+        df = dfList[i]
         # Remove entries with null values (these were defective observations)
         #dfList[i] = dfList[i][pd.notnull(dfList[i].iloc[:, 1])]
         
         # Convert counts from strings to numerics
-        for col in dfList[i].columns[1:]:
-            dfList[i][col] = pd.to_numeric(dfList[i][col])
+        for col in df.columns[1:]:
+            df[col] = pd.to_numeric(df[col])
         
         # Rename columns, according to whether they are bike-only or ped & bike
         # counters; Fremont Bridge (i = 3) lacked a total column, so is treated 
         # separately here
-        if len(dfList[i].columns) == 3: #Fremont has no total column
-            dfList[i].columns = ["Date", "BikeNB", "BikeSB"]
-            dfList[i][Counters[i]] = dfList[i]["BikeNB"] + dfList[i]["BikeSB"]
-        elif len(dfList[i].columns) == 4: # For bike only counters
-            dfList[i].columns = ["Date", Counters[i], "BikeNB", "BikeSB"]
-        elif len(dfList[i].columns) == 6: # For bike and ped counters
-            dfList[i].columns = ["Date", "PBTotal", "PedNB", "PedSB", "BikeNB", "BikeSB"]
-            dfList[i][Counters[i]] = dfList[i]["BikeNB"] + dfList[i]["BikeSB"]
+
+        if len(df.columns) == 4: # For bike only counters
+            df.columns = ["Date", Counters[i], "BikeNB", "BikeSB"]
+        elif len(df.columns) == 6: # For bike and ped counters
+            df.columns = ["Date", "PBTotal", "PedNB", "PedSB", "BikeNB", "BikeSB"]
+            df[Counters[i]] = df["BikeNB"] + df["BikeSB"]
+        else: #Fremont has no total column
+            df.columns = ["Date", "BikeNB", "BikeSB"]
+            df[Counters[i]] = df["BikeNB"] + df["BikeSB"]
              
         # Convert date strings to timestamp objects
-        dfList[i].index = pd.to_datetime(dfList[i]["Date"], format = '%Y-%m-%dT%H:%M:%S')
-        dfList[i] = dfList[i][[Counters[i]]]
+        df.index = pd.to_datetime(df["Date"], format = '%Y-%m-%dT%H:%M:%S')
+        df = df[[Counters[i]]]
+        newList.append(df)
     
     # Create a data frame whose index is the complete date list    
-    totalDF = pd.DataFrame(index = dfList[3].index)
+    totalDF = pd.DataFrame(index = newList[3].index)
+    
+    newList[3].to_csv(r"C:\Users\asher\Documents\GitHub\data602-finalproject\FremontHourly.csv")
+        
     
     # Join all the counter data on dates. Note, this counter data only includes bike totals
-    totalDF = totalDF.join(dfList, how = 'outer')
+    totalDF = totalDF.join(newList)
+    totalDF = totalDF[~totalDF.index.duplicated(keep='first')]
+    
+    '''totalnewPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\totalDFnew.csv"
+        
+    totalDF.to_csv(totalnewPath)
+    
+    for i in range(len(Counters)):
+        print(newList[i].head())'''
+    
     # Remove entries with null values, these are defective observations
     # For some reason, putting this in the main loop caused a crash every time
     #for i in range(len(Counters)):
