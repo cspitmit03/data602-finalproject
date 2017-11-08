@@ -127,7 +127,6 @@ def getRawData():
         dfList.append(getJSON(Counters[i]))
     return dfList
 
-
 def modifyData(dfList):
     
     newList = []
@@ -159,59 +158,56 @@ def modifyData(dfList):
         newList.append(df)
     
     # Create a data frame whose index is the complete date list    
-    totalDF = pd.DataFrame(index = newList[3].index)
-    
-    newList[3].to_csv(r"C:\Users\asher\Documents\GitHub\data602-finalproject\FremontHourly.csv")
+    totalDF = pd.DataFrame(index = dfList[3].index)
         
-    
     # Join all the counter data on dates. Note, this counter data only includes bike totals
     totalDF = totalDF.join(newList)
     totalDF = totalDF[~totalDF.index.duplicated(keep='first')]
-    
-    '''totalnewPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\totalDFnew.csv"
-        
-    totalDF.to_csv(totalnewPath)
-    
-    for i in range(len(Counters)):
-        print(newList[i].head())'''
-    
-    # Remove entries with null values, these are defective observations
-    # For some reason, putting this in the main loop caused a crash every time
-    #for i in range(len(Counters)):
-    #    dfList[i] = dfList[i][pd.notnull(dfList[i]["BTotal"])]
+
     return totalDF
 
-'''def getTotalDF(dfList):
-    totalDFf = pd.DataFrame({})
+def markNulls(totalDF):
     
-    #for i in range(len(dfList)):
+    # This function marks hourly entries as null when they seem defective
+    # They seem defective when a) they have zeros or values close to zero when
+    # other counters have positive counts and b) when in a long anomalous chain
+    # of zero or near-zero values
+    
+    #BGT
+    totalDF.loc["11/14/2015 9:00":"12/7/2015 11:00","BGT"] = None
+    
+    #Broad
+    totalDF.loc["11/29/2014 18:00":"11/30/2014 23:00","Broad"] = None
+    totalDF.loc["6/1/2015 0:00":"6/1/2015 10:00","Broad"] = None
+    totalDF.loc["9/4/2015 12:00":"9/18/2015 13:00","Broad"] = None  
+    totalDF.loc["7/24/2017 3:00":"8/1/2017 11:00","Broad"] = None
+    
+    #Elliott
+    totalDF.loc["3/1/2015 12:00":"4/2/2015 12:00","Elliott"] = None 
+
+    #MTS
+    totalDF.loc["2/20/2015 20:00":"3/3/2015 9:00","MTS"] = None
+    
+    #NW58
+    totalDF.loc["8/25/2014 16:00":"8/28/2014 13:00","NW58"] = None
+    totalDF.loc["12/30/2014 2:00":"1/1/2015 12:00","NW58"] = None
+    totalDF.loc["4/11/2015 0:00":"4/12/2015 23:00","NW58"] = None
+    totalDF.loc["5/15/2015 18:00":"5/17/2015 6:00","NW58"] = None
+    totalDF.loc["4/21/2017 12:00":"4/25/2017 11:00","NW58"] = None
+    totalDF.loc["4/28/2017 14:00":"5/3/2017 12:00","NW58"] = None
+    totalDF.loc["5/12/2017 9:00":"6/2/2017 12:00","NW58"] = None
+
+    #Second
+    totalDF.loc["6/11/2015 23:00":"6/18/2015 10:00","Second"] = None   
+    totalDF.loc["4/2/2016 3:00":"4/4/2016 10:00","Second"] = None
+    totalDF.loc["11/1/2016 9:00":"11/28/2016 13:00","Second"] = None 
         
-        # Rename BTotal column to Counter name, and remove columns after
-    #    dfList[i] = dfList[i].rename(columns = {'BTotal':Counters[i]})
-    #    dfList[i] = dfList[i].iloc[:, 0:2]
+    #TwoSix
+    totalDF.loc["1/30/2015 11:00":"2/3/2015 9:00","TwoSix"] = None
+    totalDF.loc["11/16/2015 18:00":"12/2/2015 10:00","TwoSix"] = None
+    totalDF.loc["11/1/2016 9:00":"11/28/2016 13:00","TwoSix"] = None
     
-    # Use longest-running counter (Fremont, i = 3) to create a dates column    
-    result = pd.DataFrame(index = dfList[3].Date)
-    
-    
-    
-    # Merge values into date dataframe
-    for i in range(len(dfList)):    
-        #totalDFf[Counters[i]] = dfList[i][Counters[i]]
-        #df = pd.merge(totalDFf, dfList[i], how='outer', on=[totalDFf.index, dfList[i]["Date"])
-        df = dfList[i].copy()
-        df.index = df["Date"]
-        del df["Date"]
-        result.join(df, how = "outer")
-        
-    # Sort entries by date
-    totalDF = totalDF.sort_values('Date')
-    
-    # Convert date column to index
-    totalDF.index = totalDF["Date"]
-    del totalDF["Date"]
-    
-    return totalDF'''
+    return totalDF
 
 def getDailyDF(df):
     # Create dataframe that displays daily totals by counter
@@ -279,7 +275,9 @@ def updateData():
     
     # Pull data from Seattle data portal, then write to local Github repo
     raw = getRawData()
-    dfList = raw.copy()
+    dfList = []
+    for i in range(len(raw)):
+        dfList.append(raw[i].copy(deep = True))
     totalDF = modifyData(dfList)
     dailyDF = getDailyDF(totalDF)
     
