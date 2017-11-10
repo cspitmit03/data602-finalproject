@@ -3,6 +3,8 @@ import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
 import calendar
+from fbprophet import Prophet
+import matplotlib.pyplot as plt
 # from pd.io.json import json_normalize
 
 # Dictionary of Counters and their JSON file location
@@ -24,6 +26,9 @@ Counters.sort()
 # Column list for later use in reordering columns for ped & bike counters
 PBColOrder = ["Date","BTotal", "PBTotal", "PedNB", "PedSB", "BikeNB", "BikeSB"]
 
+plt.style.use('fivethirtyeight')
+
+'''
 # Grab the datasets
 weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
 weatherDF = pd.read_csv(weatherPath, index_col = 0)
@@ -47,7 +52,7 @@ for i in range(len(dailyDF)):
     Indx.append(datetime.strptime(dailyDF.index[i], '%Y-%m-%d').date())
 dailyDF.index = Indx
 
-'''
+
 sunsAndBoolsDF = getSunsAndBools()
 
 FremontDF = pd.concat([dailyDF["Fremont"], sunsAndBoolsDF, weatherDF], axis = 1)
@@ -163,7 +168,8 @@ def modifyData(dfList):
     # Join all the counter data on dates. Note, this counter data only includes bike totals
     totalDF = totalDF.join(newList)
     totalDF = totalDF[~totalDF.index.duplicated(keep='first')]
-
+    totalDF.index = dfList[3].index
+    
     return totalDF
 
 def markNulls(totalDF):
@@ -173,22 +179,59 @@ def markNulls(totalDF):
     # other counters have positive counts and b) when in a long anomalous chain
     # of zero or near-zero values
     
-    #BGT
+    # These nulls are then replaced by imputed values calculated as a ratio to 
+    # the Fremont values. For missing Fremont values, these are imputed by the 
+    # average of the datapoints one week before and after
+        
+    # Impute Missing Fremont values: Average of t - 1 week, t + 1 week
+    totalDF.loc["6/14/2013 9:00", "Fremont"] = (totalDF.loc["6/7/2013 9:00", "Fremont"] + totalDF.loc["6/21/2013 9:00", "Fremont"])/2 
+    totalDF.loc["6/14/2013 10:00", "Fremont"] = (totalDF.loc["6/7/2013 10:00", "Fremont"] + totalDF.loc["6/21/2013 10:00", "Fremont"])/2 
+    totalDF.loc["3/9/2014 2:00", "Fremont"] = (totalDF.loc["3/2/2014 2:00", "Fremont"] + totalDF.loc["3/16/2014 2:00", "Fremont"])/2 
+    totalDF.loc["3/8/2015 2:00", "Fremont"] = (totalDF.loc["3/1/2015 2:00", "Fremont"] + totalDF.loc["3/15/2015 2:00", "Fremont"])/2 
+    totalDF.loc["4/21/2015 11:00", "Fremont"] = (totalDF.loc["4/14/2015 11:00", "Fremont"] + totalDF.loc["4/28/2015 11:00", "Fremont"])/2 
+    totalDF.loc["4/21/2015 12:00", "Fremont"] = (totalDF.loc["4/14/2015 12:00", "Fremont"] + totalDF.loc["4/28/2015 12:00", "Fremont"])/2 
+    totalDF.loc["3/13/2016 2:00", "Fremont"] = (totalDF.loc["3/6/2016 2:00", "Fremont"] + totalDF.loc["3/20/2016 2:00", "Fremont"])/2 
+    totalDF.loc["3/12/2017 2:00", "Fremont"] = (totalDF.loc["3/5/2017 2:00", "Fremont"] + totalDF.loc["3/19/2017 2:00", "Fremont"])/2     
+    
+    # Calculate ratios for imputing values
+    ratios = []
+    # Non-Null Fremont Entries
+    Fremonts = totalDF["Fremont"][totalDF["Fremont"].notnull()]
+    
+    for i in range(10):
+        
+        # Counter name
+        name = Counters[i]
+        
+        # Non-Null Counter i entries
+        Counter = totalDF[totalDF[name].notnull()][name]
+        
+        #Join on rows where they both have values (i.e. have identical indexes)
+        Both = Fremonts.align(Counter, axis = 0, join = 'inner')
+        
+        # Store the ratio of Counter sum / Fremont Sum, which empirically
+        # is 8%-41%
+        ratios.append(sum(Both[1])/sum(Both[0]))
+    
+    
+    # Identify probable defective values as null, then impute them
+    
+    #BGT - 0
     totalDF.loc["11/14/2015 9:00":"12/7/2015 11:00","BGT"] = None
     
-    #Broad
+    #Broad - 1
     totalDF.loc["11/29/2014 18:00":"11/30/2014 23:00","Broad"] = None
     totalDF.loc["6/1/2015 0:00":"6/1/2015 10:00","Broad"] = None
     totalDF.loc["9/4/2015 12:00":"9/18/2015 13:00","Broad"] = None  
     totalDF.loc["7/24/2017 3:00":"8/1/2017 11:00","Broad"] = None
     
-    #Elliott
-    totalDF.loc["3/1/2015 12:00":"4/2/2015 12:00","Elliott"] = None 
+    #Elliot - 2
+    totalDF.loc["3/1/2015 12:00":"4/2/2015 12:00","Elliot"] = None 
 
-    #MTS
+    #MTS - 4
     totalDF.loc["2/20/2015 20:00":"3/3/2015 9:00","MTS"] = None
     
-    #NW58
+    #NW58 - 5
     totalDF.loc["8/25/2014 16:00":"8/28/2014 13:00","NW58"] = None
     totalDF.loc["12/30/2014 2:00":"1/1/2015 12:00","NW58"] = None
     totalDF.loc["4/11/2015 0:00":"4/12/2015 23:00","NW58"] = None
@@ -197,15 +240,27 @@ def markNulls(totalDF):
     totalDF.loc["4/28/2017 14:00":"5/3/2017 12:00","NW58"] = None
     totalDF.loc["5/12/2017 9:00":"6/2/2017 12:00","NW58"] = None
 
-    #Second
+    #Second - 6
     totalDF.loc["6/11/2015 23:00":"6/18/2015 10:00","Second"] = None   
     totalDF.loc["4/2/2016 3:00":"4/4/2016 10:00","Second"] = None
     totalDF.loc["11/1/2016 9:00":"11/28/2016 13:00","Second"] = None 
-        
-    #TwoSix
+    
+    # Spokane - 7
+    
+    # Thirty - 8
+    
+    # TwoSix - 9
     totalDF.loc["1/30/2015 11:00":"2/3/2015 9:00","TwoSix"] = None
     totalDF.loc["11/16/2015 18:00":"12/2/2015 10:00","TwoSix"] = None
     totalDF.loc["11/1/2016 9:00":"11/28/2016 13:00","TwoSix"] = None
+    
+    
+    # Pseudocode: impute values to null using ratios
+    for i in range(10):
+        name = Counters[i]
+        Counts = totalDF[name]
+        totalDF.loc[Counts.isnull(), name] = ratios[i]*totalDF.loc[Counts.isnull()]["Fremont"]
+    
     
     return totalDF
 
@@ -287,9 +342,11 @@ def updateData():
     totalDF.to_csv(totalPath)
     dailyDF.to_csv(dailyPath)
     
+    totalDF = pd.read_csv(totalPath)
+    
     # Update weatherCSV manually, then add dummy variables
-    '''Manually scrape WeatherUndeground for most recent full month 
-    from WeatherURL'''
+    # Manually scrape WeatherUndeground for most recent full month 
+    # from WeatherURL
     now = datetime.now()
     if now.month == 1: 
         lastMonth = 12
@@ -318,4 +375,13 @@ def get10DayForecast():
     for i in range(len(forecastList)):
         del forecastList[i]["date"]
     
+def weeklyDF(dailyDF):
+    # Converts dataframe of daily counts to rolling weekly average
+    return dailyDF.rolling(window = 7).mean()
 
+weeklyDF = dailyDF.rolling(window = 30).mean()
+ax = weeklyDF.plot(figsize=(12, 8))
+ax.set_ylabel('Monthly Number of Airline Passengers')
+ax.set_xlabel('Date')
+
+plt.show()
