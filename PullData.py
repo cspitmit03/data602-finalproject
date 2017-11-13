@@ -273,21 +273,7 @@ def getDailyDF(df):
     
     return df
 
-def subsetDate(begin, end, df):
-    # Return dataframe that is within the date bounds specified, in m/D/Y 
-    # format
-    begin = datetime.strptime(begin, '%m/%d/%Y').date()
-    begin = begin.strftime('%Y%m%d')
-    end = datetime.strptime(end, '%m/%d/%Y').date()
-    end = end.strftime('%Y%m%d')
-    
-    return df[begin:end]
 
-def subsetTime(begin, end, df):
-    # Return dataframe within the times specified, in 24 hour format
-    # e.g. begin = '12:00', end = '13:00'
-    df = df.between_time(begin, end)
-    return df
     
 def subsetWeather(weather, df):
     # Return dataframe that has the specified weather
@@ -379,6 +365,37 @@ def weeklyDF(dailyDF):
     # Converts dataframe of daily counts to rolling weekly average
     return dailyDF.rolling(window = 7).mean()
 
+def updateDaylightCSV(end = datetime(2017, 10, 31)):
+
+    # Create a list containing all dates
+    start = datetime(2012, 10, 3) # First day of data
+    duration = (end - start).days + 1 # length of duration in days
+    
+    dateList = []
+    for i in range(duration):
+        dateList.append((start + timedelta(days=i)).date())
+        
+    axis = 23.44
+    latitude = 47.61
+    
+    # Given start and end dates, return an array containing the hours of sunlight
+    # for each date
+    daylight = []
+    for i in range(duration):
+        day = (dateList[i] - pd.datetime(2000, 12, 21).date()).days # difference in days
+        day %= 365.25
+        m = 1. - np.tan(np.radians(latitude)) * np.tan(np.radians(axis) * np.cos(day * np.pi / 182.625))
+        m = max(0, min(m, 2))
+        daylight.append(24. * np.degrees(np.arccos(1 - m)) / 180.)
+    
+    daylightDF =  pd.DataFrame(data = {'daylightHours': daylight}, 
+                               index = dateList)
+    daylightDF.index.name = "Date"
+    daylightDF.to_csv("daylightDF.csv")
+        
+    return 
+        
+        
 weeklyDF = dailyDF.rolling(window = 30).mean()
 ax = weeklyDF.plot(figsize=(12, 8))
 ax.set_ylabel('Monthly Number of Airline Passengers')
