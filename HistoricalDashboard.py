@@ -9,17 +9,22 @@ from urllib.request import urlopen
 from bokeh.plotting import figure
 from bokeh.io import output_file, show
 import numpy as np
-from PullData import getSunsAndBools
 
 # Colors for plotting Counters
 colors = ['red', 'green', 'blue', 'orange', 'black', 'grey', 'brown',
                    'cyan', 'yellow', 'purple']
 
 # Get dataframe of historical observations, weather, and daylight hours
-histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
-weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
-daylightPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/daylightDF.csv"
-jsPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/download.js"
+#histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
+#weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
+#daylightPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/daylightDF.csv"
+
+# Local path for testing
+histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/histDF.csv"
+weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/weatherDF.csv"
+daylightPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/daylightDF.csv"
+
+#jsPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/download.js"
 
 histDF = pd.read_csv(histPath, index_col = 0) # From Seattle Data Portal
 weatherDF = pd.read_csv(weatherPath, index_col = 0) # From WeatherUnderground
@@ -43,33 +48,35 @@ daylightDF.index = Indx
 
 MyTools = "pan,wheel_zoom,box_zoom,reset,undo,save"
 
-def subsetDate(begin, end, df):
+def subsetDate(start, end, df):
     # Return dataframe that is within the date bounds specified, in m/D/Y 
     # format
-    begin = datetime.strptime(begin, '%m/%d/%Y').date()
-    begin = begin.strftime('%Y%m%d')
+    start = datetime.strptime(start, '%m/%d/%Y').date()
+    start = start.strftime('%Y%m%d')
     end = datetime.strptime(end, '%m/%d/%Y').date()
     end = end.strftime('%Y%m%d')
     
-    return df[begin:end]
+    return df[start:end]
 
-def subsetTime(begin, end, df):
-    # Return dataframe within the times specified, in 24 hour format
-    # e.g. begin = '12:00', end = '13:00'
-    df = df.between_time(begin, end)
-    return df
-
-def subsetWeekday(daylist, df):
-    # Return dataframe containing only the days of the week specified,
-    # where 0 = Monday, 1 = Tuesday, etc.
-    return df[df.index.weekday.isin(daylist)]
-
-def subsetMonth(monthList, df):
+def subsetMonth(monthList, df=histDF):
     # Return dataframe containing only the days of the week specified,
     # where 0 = Monday, 1 = Tuesday, etc.
     return df[df.index.month.isin(monthList)]
 
-def subsetRain(low = 0, high = 3, wdf = weatherDF, df = histDF):
+def subsetWeekday(daylist, df=histDF):
+    # Return dataframe containing only the days of the week specified,
+    # where 0 = Monday, 1 = Tuesday, etc.
+    return df[df.index.weekday.isin(daylist)]
+
+def subsetHours(start, end, df=histDF):
+    # Return dataframe within the times specified, in 24 hour format
+    # e.g. start = '12:00', end = '13:00'
+    start = str(start) + ":00"
+    end = str(end) + ":00"
+    df = df.between_time(start, end)
+    return df
+
+def subsetRain(low = 0, high = 2.5, wdf = weatherDF, df = histDF):
     # Subset histDF by specified rain volume, inches per day
     
     dfDates = pd.Series(df.index.date) # All dates in dataset
@@ -149,8 +156,8 @@ def plotTypicalDay(df = histDF):
         p.line(xs, df.iloc[:,i], color= colors[i], legend= df.columns[i])
         p.xaxis[0].formatter = DatetimeTickFormatter(hours = '%a %-I %p')
     
-    show(p)
-    return
+    # show(p)
+    return p
 
 def plotTypicalWeek(df = histDF): 
     # Plots average count by hour and day of week
@@ -201,79 +208,89 @@ def plotHistory(df = histDF):
         p.xaxis[0].formatter = DatetimeTickFormatter(months = '%B',
                                                      years = '%Y')
     show(p)
-    return
+    return 
+
+def TypicalDay(df = histDF):
+    return df.groupby([df.index.hour])[df.columns].mean()
+
+# Set up data
+x = list(range(24))
+y = histDF.groupby([histDF.index.hour])[histDF.columns].mean().Fremont
+source = ColumnDataSource(data=dict(x=x, y=y))
+
+# Set up plot
+plot = figure(plot_height=600, plot_width=800, title="Bicycle Counts",
+              tools=MyTools,
+              x_range=[0, 23], y_range=[0, 600])
+
+plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
 
 
-    
-
-
-'''
-def HourTicker():
-    return "{:.0f} + {:.2f}".format(tick, tick % 1)
-'''
-
-source = ColumnDataSource(data=dict())
-
-def update():
-    current = histDF[(Hour >= HourSlider.value[0]) & (Hour <= HourSlider.value[1])]
-    source.data = {
-        'Date': current.index,
-        'BGT': current.BGT,
-        'Broad': current.Broad,
-        'Elliot': current.Elliot,
-        'Fremont': current.Fremont,
-        'MTS': current.MTS,
-        'NW58': current.NW58,
-        'Second': current.Second,
-        'Spokane': current.Spokane,
-        'Thirty': current.Thirty,
-        'TwoSix': current.TwoSix                
-    }
-    
+show(plot)
 # Widgets section
-
-HourSlider = RangeSlider(title="Time Range", start=0, end=23, value=(8, 17), step=1, format="0")
-HourSlider.on_change('value', lambda attr, old, new: update())
-
-DateSlider = DateRangeSlider(title="Date range", 
-                             value=(date(2013, 10, 3), 
-                            date(2017, 10, 31)), 
-                            start=date(2013, 10, 3), 
-                            end=date(2017, 10, 31), 
-                            step=1)
 
 # Drop down for selecting viewing a typical week or typical day
 ViewDropdown = Select(title = "View by...", value = "Daily",
-              options = ["Day", "Week", "Annual", "Historical"])
+              options = ["Day", "Week", "Year", "Historical"])
+
+CounterBoxes = CheckboxButtonGroup(labels = list(histDF.columns), active = [0,9])
+
+DateSlider = DateRangeSlider(title="Date range", value=(date(2013, 10, 3), 
+                            date(2017, 10, 31)), start=date(2013, 10, 3), 
+                            end=date(2017, 10, 31), step=1)
+
+MonthBoxes = CheckboxButtonGroup(labels = ["Jan.", "Feb.", "March", "April", 
+                                           "May", "June", "July", "Aug.", "Sep.",
+                                           "Oct.", "Nov.", "Dec."], active = [0,11])
+WeekdayBoxes = CheckboxButtonGroup(labels = ["Monday", "Tuesday", "Wednesday",
+                                              "Thursday", "Friday", "Saturday",
+                                              "Sunday"], active = [0,6])
+HourSlider = RangeSlider(title="Time Range", start=0, end=23, value=(0, 23), step=1, format="0")
 
 DaylightSlider = RangeSlider(title = "Hours of Daylight", start = 8, end = 16, 
                              value = (8,16), step = 1, format = "0")
 
-WeekdayBoxes = CheckboxButtonGroup(title = "Days of the Week",
-                                   labels = ["Monday", "Tuesday", "Wednesday",
-                                              "Thursday", "Friday", "Saturday",
-                                              "Sunday"],
-                                    active = [0,1])
+WeatherBoxes = CheckboxButtonGroup(labels = ["None", "Fog", "Rain", "Snow", 
+                                             "Thunderstorm"], active = [0,4])
 
-MonthBoxes = CheckboxButtonGroup(title = "Months",
-                                 labels = ["Jan.", "Feb.", "March", "April", 
-                                           "May", "June", "July", "Aug.", "Sep.",
-                                           "Oct.", "Nov.", "Dec."],
-                                    active = [0,1])
+RainSlider = RangeSlider(title="Inches of Rain per Day", start = 0, end = 2.5, 
+                         value = (0,3), step = 0.05, format = "0.00")
 
-WeatherBoxes = CheckboxButtonGroup(title = "Weather Events",
-                                   labels = ["None", "Fog", "Rain", "Snow", 
-                                             "Thunderstorm"],
-                                    active = [0,1])
+# Set up callbacks
+def update_data(attrname, old, new):
+
+    # Get the current slider values
+    view = ViewDropdown.value
+    counters = CounterBoxes.active
+    dates = DateSlider.value
+    months = MonthBoxes.active
+    weekdays = WeekdayBoxes.active
+    hours = np.round(HourSlider.value)
+    weather = WeatherBoxes.active
+    light = DaylightSlider.value
+    rain = RainSlider.value
+
+    # Generate the new dataframe
+    mydf = subsetHours(start = hours[0], end = hours[1]) # Hours
+    mydf = subsetDaylight(df = mydf, low = light[0], high = light[1])
+    
+    
+    x = range(hours[0],hours[1] + 1)
+    y = TypicalDay(mydf).Fremont
+    
+    # Generate the new curve
+    #x = np.linspace(0, 4*np.pi, N)
+    #y = a*np.sin(k*x + w) + b
+
+    source.data = dict(x=x, y=y)
+
+for w in [HourSlider, DaylightSlider]:
+    w.on_change('value', update_data)
 
 
-button = Button(label="Download", button_type="success")
-button.callback = CustomJS(args=dict(source=source), 
-                           code=urlopen(jsPath).read())
+# Set up layouts and add to document
+inputs = widgetbox(HourSlider, DaylightSlider)
 
-controls = widgetbox(HourSlider, button)
+curdoc().add_root(row(inputs, plot, width=800))
+curdoc().title = "Bicycle Counts"
 
-curdoc().add_root(row(controls, table))
-curdoc().title = "Export CSV"
-
-update()
