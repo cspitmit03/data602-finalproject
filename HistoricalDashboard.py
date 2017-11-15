@@ -3,7 +3,7 @@ from datetime import datetime, date
 import pandas as pd
 from bokeh.layouts import row, widgetbox, layout
 from bokeh.models import ColumnDataSource,CheckboxButtonGroup, CustomJS, DatetimeTickFormatter, FuncTickFormatter
-from bokeh.models.widgets import Select, DateRangeSlider, RangeSlider, Button, DataTable, TableColumn, DateFormatter
+from bokeh.models.widgets import Select, DateRangeSlider, RadioGroup, RangeSlider, Button, DataTable, TableColumn, DateFormatter
 from bokeh.io import curdoc
 from urllib.request import urlopen
 from bokeh.plotting import figure
@@ -54,16 +54,6 @@ for i in range(len(daylightDF)):
 daylightDF.index = Indx
 
 MyTools = "pan,wheel_zoom,box_zoom,reset,undo,save"
-
-def subsetDate(start, end, df):
-    # Return dataframe that is within the date bounds specified, in m/D/Y 
-    # format
-    start = datetime.strptime(start, '%m/%d/%Y').date()
-    start = start.strftime('%Y%m%d')
-    end = datetime.strptime(end, '%m/%d/%Y').date()
-    end = end.strftime('%Y%m%d')
-    
-    return df[start:end]
 
 def subsetMonth(monthList, df=histDF):
     # Return dataframe containing only the days of the week specified,
@@ -218,30 +208,45 @@ def plotHistory(df = histDF):
     return 
 
 def TypicalDay(df = histDF):
-    return df.groupby([df.index.hour])[df.columns].mean()
+    df = df.groupby([df.index.hour])[df.columns].mean()
+    return df
+
+def TypicalWeek(df = histDF):
+    df = df.groupby([df.index.weekday, df.index.hour])[df.columns].mean()
+    
+    indx = np.array([])
+    for i in range(len(df.index)):
+        indx = np.append(indx, df.index[i][0]*24 + df.index[i][1] + 4*24)
+    
+    df.index = indx
+    return df
 
 # Set up data
-x = list(range(24))
-y = histDF.groupby([histDF.index.hour])[histDF.columns].mean().Fremont
+mydf = TypicalDay()  
+x =  np.array(mydf.index)*1000*60*60
+#x = list(np.array(range(24))*1000*60*60)
+y = mydf.Fremont
 source = ColumnDataSource(data=dict(x=x, y=y))
 
 # Set up plot
 plot = figure(plot_height=600, plot_width=750, title="Bicycle Counts",
-              tools=MyTools,
-              x_range=[0, 23], y_range=[0, 600])
-
+              tools=MyTools, y_range=[0,700])
+              #x_range=[0, 23]
+plot.xaxis.axis_label = "Hour of the Day" # x axis label
+#plot.xaxis.ticker = list(np.array([0, 6, 8, 10, 12, 14, 16, 18, 20, 
+#                              22]*1000*60*60)) # x axis tick marks
+plot.xaxis.formatter = DatetimeTickFormatter(hours = ['%I %p'], days = ['%a'])
 plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
 
 
-show(plot)
 # Widgets section
 
 # Drop down for selecting viewing a typical week or typical day
-ViewDropdown = Select(title = "View by...", value = "Daily",
+ViewDropdown = Select(title = "View by Average...", value = "Day",
               options = ["Day", "Week", "Year", "Historical"])
 
-CounterBoxes = CheckboxButtonGroup(labels = list(histDF.columns), 
-                                   active = list(range(10)))
+CounterRadio = RadioGroup(labels = list(histDF.columns), 
+                                   active = 3)
 
 DateSlider = DateRangeSlider(title="Date range", value=(date(2013, 10, 3), 
                             date(2017, 10, 31)), start=date(2013, 10, 3), 
@@ -254,7 +259,7 @@ MonthBoxes = CheckboxButtonGroup(labels = ["Jan.", "Feb.", "March", "April",
 WeekdayBoxes = CheckboxButtonGroup(labels = ["Monday", "Tuesday", "Wednesday",
                                               "Thursday", "Friday", "Saturday",
                                               "Sunday"], 
-                                   active=list(range(7)))
+                                   active=list(range(5)))
 HourSlider = RangeSlider(title="Hour Range", start=0, end=23, value=(0, 23), 
                          step=1, format='0')
 
@@ -273,7 +278,7 @@ def update_data(attrname, old, new):
 
     # Get the current slider values
     view = ViewDropdown.value
-    counters = CounterBoxes.active
+    counter = CounterRadio.active
     dates = DateSlider.value
     months = MonthBoxes.active
     weekdays = WeekdayBoxes.active
@@ -288,7 +293,7 @@ def update_data(attrname, old, new):
 
     # Generate the new dataframe
     mydf = histDF.copy(deep = True)
-    mydf = mydf[dates[0]:dates[1]] # Subset dates 
+    mydf = mydf.loc[dates[0]:dates[1]] # Subset dates 
     mydf = mydf[mydf.index.month.isin(months)] # Subset months
     mydf = mydf[mydf.index.weekday.isin(weekdays)] # Subset weekdays 
     mydf = subsetHours(start = hours[0], end = hours[1], df = mydf) # Subset hours
@@ -296,24 +301,30 @@ def update_data(attrname, old, new):
     mydf = subsetWeather(weatherList, df = mydf)
     mydf = subsetRain(df = mydf, low = rain[0], high = rain[1])
     
+    if view == "Week":
+        mydf = TypicalWeek(df = mydf)
+    else:
+        mydf = TypicalDay(df = mydf)
+        
+    x =  np.array(mydf.index)*1000*60*60 # Convert ms to hours
+    y = mydf.iloc[:, counter].astype(float)
     
-    x = range(int(hours[0]),int(hours[1] + 1))
-    y = TypicalDay(mydf).Fremont.astype(float)
+    #x =  np.array(mydf.index)*1000*60*60 # Convert ms to hours
     
-    # Generate the new curve
-    #x = np.linspace(0, 4*np.pi, N)
-    #y = a*np.sin(k*x + w) + b
-
+    #x = range(int(hours[0]),int(hours[1] + 1)) 
+    #y = TypicalDay(mydf).iloc[:, counter].astype(float)
+    #x = np.array(range(int(hours[0]),int(hours[1] + 1)))*7
+        
     source.data = dict(x=x, y=y)
-
+    
 for w in [ViewDropdown, DateSlider, HourSlider, DaylightSlider, RainSlider]:
     w.on_change('value', update_data)
     
-for z in [MonthBoxes, WeekdayBoxes, WeatherBoxes]:
+for z in [MonthBoxes, WeekdayBoxes, WeatherBoxes, CounterRadio]:
     z.on_change('active', update_data)
 
 # Set up layouts and add to document
-inputs = widgetbox(ViewDropdown, DateSlider, MonthBoxes, WeekdayBoxes, 
+inputs = widgetbox(ViewDropdown, CounterRadio, DateSlider, MonthBoxes, WeekdayBoxes, 
                    HourSlider, DaylightSlider, WeatherBoxes, RainSlider)
 
 
