@@ -1,7 +1,7 @@
 from os.path import dirname, join
 from datetime import datetime, date
 import pandas as pd
-from bokeh.layouts import row, widgetbox
+from bokeh.layouts import row, widgetbox, layout
 from bokeh.models import ColumnDataSource,CheckboxButtonGroup, CustomJS, DatetimeTickFormatter, FuncTickFormatter
 from bokeh.models.widgets import Select, DateRangeSlider, RangeSlider, Button, DataTable, TableColumn, DateFormatter
 from bokeh.io import curdoc
@@ -13,6 +13,13 @@ import numpy as np
 # Colors for plotting Counters
 colors = ['red', 'green', 'blue', 'orange', 'black', 'grey', 'brown',
                    'cyan', 'yellow', 'purple']
+
+# Weather Coding Dictionary
+weatherDict = {0:"None", 
+               1: "Fog", 
+               2: "Rain", 
+               3: "Snow",
+               4:"Thunderstorm"}
 
 # Get dataframe of historical observations, weather, and daylight hours
 #histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
@@ -71,8 +78,8 @@ def subsetWeekday(daylist, df=histDF):
 def subsetHours(start, end, df=histDF):
     # Return dataframe within the times specified, in 24 hour format
     # e.g. start = '12:00', end = '13:00'
-    start = str(start) + ":00"
-    end = str(end) + ":00"
+    start = str(int(start)) + ":00"
+    end = str(int(end)) + ":00"
     df = df.between_time(start, end)
     return df
 
@@ -219,7 +226,7 @@ y = histDF.groupby([histDF.index.hour])[histDF.columns].mean().Fremont
 source = ColumnDataSource(data=dict(x=x, y=y))
 
 # Set up plot
-plot = figure(plot_height=600, plot_width=800, title="Bicycle Counts",
+plot = figure(plot_height=600, plot_width=750, title="Bicycle Counts",
               tools=MyTools,
               x_range=[0, 23], y_range=[0, 600])
 
@@ -233,7 +240,8 @@ show(plot)
 ViewDropdown = Select(title = "View by...", value = "Daily",
               options = ["Day", "Week", "Year", "Historical"])
 
-CounterBoxes = CheckboxButtonGroup(labels = list(histDF.columns), active = [0,9])
+CounterBoxes = CheckboxButtonGroup(labels = list(histDF.columns), 
+                                   active = list(range(10)))
 
 DateSlider = DateRangeSlider(title="Date range", value=(date(2013, 10, 3), 
                             date(2017, 10, 31)), start=date(2013, 10, 3), 
@@ -241,17 +249,21 @@ DateSlider = DateRangeSlider(title="Date range", value=(date(2013, 10, 3),
 
 MonthBoxes = CheckboxButtonGroup(labels = ["Jan.", "Feb.", "March", "April", 
                                            "May", "June", "July", "Aug.", "Sep.",
-                                           "Oct.", "Nov.", "Dec."], active = [0,11])
+                                           "Oct.", "Nov.", "Dec."], 
+                                 active = list(range(12)))
 WeekdayBoxes = CheckboxButtonGroup(labels = ["Monday", "Tuesday", "Wednesday",
                                               "Thursday", "Friday", "Saturday",
-                                              "Sunday"], active = [0,6])
-HourSlider = RangeSlider(title="Time Range", start=0, end=23, value=(0, 23), step=1, format="0")
+                                              "Sunday"], 
+                                   active=list(range(7)))
+HourSlider = RangeSlider(title="Hour Range", start=0, end=23, value=(0, 23), 
+                         step=1, format='0')
 
 DaylightSlider = RangeSlider(title = "Hours of Daylight", start = 8, end = 16, 
                              value = (8,16), step = 1, format = "0")
 
 WeatherBoxes = CheckboxButtonGroup(labels = ["None", "Fog", "Rain", "Snow", 
-                                             "Thunderstorm"], active = [0,4])
+                                             "Thunderstorm"], 
+                                   active = [0,1,2,3,4])
 
 RainSlider = RangeSlider(title="Inches of Rain per Day", start = 0, end = 2.5, 
                          value = (0,3), step = 0.05, format = "0.00")
@@ -270,13 +282,23 @@ def update_data(attrname, old, new):
     light = DaylightSlider.value
     rain = RainSlider.value
 
+    # Translate weather list of ints to list of strings, eg ["Fog", "Rain"]
+    weatherList = []
+    for i in weather: weatherList.append(weatherDict[i])
+
     # Generate the new dataframe
-    mydf = subsetHours(start = hours[0], end = hours[1]) # Hours
+    mydf = histDF.copy(deep = True)
+    mydf = mydf[dates[0]:dates[1]] # Subset dates 
+    mydf = mydf[mydf.index.month.isin(months)] # Subset months
+    mydf = mydf[mydf.index.weekday.isin(weekdays)] # Subset weekdays 
+    mydf = subsetHours(start = hours[0], end = hours[1], df = mydf) # Subset hours
     mydf = subsetDaylight(df = mydf, low = light[0], high = light[1])
+    mydf = subsetWeather(weatherList, df = mydf)
+    mydf = subsetRain(df = mydf, low = rain[0], high = rain[1])
     
     
-    x = range(hours[0],hours[1] + 1)
-    y = TypicalDay(mydf).Fremont
+    x = range(int(hours[0]),int(hours[1] + 1))
+    y = TypicalDay(mydf).Fremont.astype(float)
     
     # Generate the new curve
     #x = np.linspace(0, 4*np.pi, N)
@@ -284,13 +306,21 @@ def update_data(attrname, old, new):
 
     source.data = dict(x=x, y=y)
 
-for w in [HourSlider, DaylightSlider]:
+for w in [ViewDropdown, DateSlider, HourSlider, DaylightSlider, RainSlider]:
     w.on_change('value', update_data)
-
+    
+for z in [MonthBoxes, WeekdayBoxes, WeatherBoxes]:
+    z.on_change('active', update_data)
 
 # Set up layouts and add to document
-inputs = widgetbox(HourSlider, DaylightSlider)
+inputs = widgetbox(ViewDropdown, DateSlider, MonthBoxes, WeekdayBoxes, 
+                   HourSlider, DaylightSlider, WeatherBoxes, RainSlider)
 
-curdoc().add_root(row(inputs, plot, width=800))
+
+lay = layout([
+        [inputs, plot]
+        ], sizing_mode = 'fixed')
+#curdoc().add_root(row(inputs, plot, width=800))
+curdoc().add_root(lay)    
 curdoc().title = "Bicycle Counts"
 
