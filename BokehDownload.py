@@ -40,7 +40,7 @@ def update():
     }
 
 slider = RangeSlider(title="Year Range", start=2012, end=2017, value=(2012, 2017), step=1, format="0")
-slider.on_change(start, lambda attr, old, new: update())
+slider.on_change('value', lambda attr, old, new: update())
 
 button = Button(label="Download", button_type="success")
 button.callback = CustomJS(args=dict(source=source), 
