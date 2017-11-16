@@ -10,6 +10,10 @@ from bokeh.plotting import figure
 from bokeh.io import output_file, show
 import numpy as np
 
+#cd C:\Users\asher\Documents\GitHub\data602-finalproject 
+#bokeh serve HistoricalDashboard.py --show
+
+
 # Colors for plotting Counters
 colors = ['red', 'green', 'blue', 'orange', 'black', 'grey', 'brown',
                    'cyan', 'yellow', 'purple']
