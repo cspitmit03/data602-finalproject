@@ -20,9 +20,14 @@ colors = ['red', 'green', 'blue', 'orange', 'black', 'grey', 'brown',
 #daylightPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/daylightDF.csv"
 
 # Local path for testing
-histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/histDF.csv"
-weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/weatherDF.csv"
-daylightPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/daylightDF.csv"
+#histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/histDF.csv"
+#weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/weatherDF.csv"
+#daylightPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/daylightDF.csv"
+
+#setwd('/Users/cspit/Documents/GitHub/data602-finalproject')
+histPath = r"histDF.csv"
+weatherPath = r"weatherDF.csv"
+daylightPath = r"daylightDF.csv"
 
 #jsPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/download.js"
 
