@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Bicycle Counts</title>
+        
+<link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-0.12.10.min.css" type="text/css" />
+<link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.10.min.css" type="text/css" />
+        
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.10.min.js"></script>
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.10.min.js"></script>
+<script type="text/javascript">
+    Bokeh.set_log_level("info");
+</script>
+        <style>
+          html {
+            width: 100%;
+            height: 100%;
+          }
+          body {
+            width: 90%;
+            height: 100%;
+            margin: auto;
+          }
+        </style>
+    </head>
+    <body>
+        
+        <div class="bk-root">
+            <div class="bk-plotdiv" id="69f00867-da08-4eb5-ad7c-e7602252cb8e"></div>
+        </div>
+        
+        <script type="text/javascript">
+            (function() {
+          var fn = function() {
+            Bokeh.safely(function() {
+              (function(root) {
+                function embed_document(root) {
+                  var docs_json = {"41f37f78-c675-4b7f-b80b-b07b1eed9509":{"roots":{"references":[{"attributes":{"overlay":{"id":"49d0fa68-51be-4641-a19c-5c9175622704","type":"BoxAnnotation"}},"id":"6625d051-5d92-4310-8915-67172dff1eed","type":"BoxZoomTool"},{"attributes":{},"id":"840c8645-02c5-44c0-96aa-670ce2a46981","type":"UndoTool"},{"attributes":{},"id":"97bc1f07-6f95-431f-ab68-72b5ff2bb4a3","type":"SaveTool"},{"attributes":{},"id":"fde6cbda-ab0e-4ae9-9eca-696ef6d99805","type":"BasicTickFormatter"},{"attributes":{"line_alpha":{"value":0.6},"line_color":{"value":"#1f77b4"},"line_width":{"value":3},"x":{"field":"x"},"y":{"field":"y"}},"id":"6258658d-579f-4a76-92fa-25c87a10c0dc","type":"Line"},{"attributes":{"active":3,"callback":null,"labels":["BGT","Broad","Elliot","Fremont","MTS","NW58","Second","Spokane","Thirty","TwoSix"]},"id":"e6b66ddc-0e19-49be-a414-b7c08c3a1b06","type":"RadioGroup"},{"attributes":{"days":["%a"],"hours":["%I %p"]},"id":"00859c5c-0d5a-4ecd-ba27-c637afad7914","type":"DatetimeTickFormatter"},{"attributes":{},"id":"19aa9789-46cd-4dc3-8b41-194ce446bc74","type":"LinearScale"},{"attributes":{"callback":null,"end":700},"id":"0d3d9626-1fc6-48fa-a67a-96a259623346","type":"Range1d"},{"attributes":{},"id":"c623488a-3594-4d36-a0f3-91b0ca23f8f5","type":"LinearScale"},{"attributes":{"callback":null,"options":["Day","Week","Year","Historical"],"title":"View by Average...","value":"Day"},"id":"4f317520-a2d6-4b5f-867a-fcc4869cd6c3","type":"Select"},{"attributes":{"axis_label":"Hour of the Day","formatter":{"id":"00859c5c-0d5a-4ecd-ba27-c637afad7914","type":"DatetimeTickFormatter"},"plot":{"id":"62d37214-3643-46d4-b224-125b3119c3c0","subtype":"Figure","type":"Plot"},"ticker":{"id":"3f0aa656-44f7-41c4-b067-4c16f9f57ae4","type":"BasicTicker"}},"id":"eefb5563-1810-462d-b3ce-f6e762839b8e","type":"LinearAxis"},{"attributes":{},"id":"3f0aa656-44f7-41c4-b067-4c16f9f57ae4","type":"BasicTicker"},{"attributes":{"plot":{"id":"62d37214-3643-46d4-b224-125b3119c3c0","subtype":"Figure","type":"Plot"},"ticker":{"id":"3f0aa656-44f7-41c4-b067-4c16f9f57ae4","type":"BasicTicker"}},"id":"2c125320-f439-4542-8d17-2021bfabd8f4","type":"Grid"},{"attributes":{"formatter":{"id":"fde6cbda-ab0e-4ae9-9eca-696ef6d99805","type":"BasicTickFormatter"},"plot":{"id":"62d37214-3643-46d4-b224-125b3119c3c0","subtype":"Figure","type":"Plot"},"ticker":{"id":"22abd4f5-f2b6-4da3-9ad1-3b9e2e76c65b","type":"BasicTicker"}},"id":"8eaafeb0-81e4-4d59-839d-3c0542e8aff8","type":"LinearAxis"},{"attributes":{"callback":null,"column_names":["x","y"],"data":{"x":[0,3600000,7200000,10800000,14400000,18000000,21600000,25200000,28800000,32400000,36000000,39600000,43200000,46800000,50400000,54000000,57600000,61200000,64800000,68400000,72000000,75600000,79200000,82800000],"y":{"__ndarray__":"BCDoEsnxKEAnGG9ln0MaQEBc3wNsqRFA6Vsaf9koCEDpV71coAoZQDiYD7HDCjpAljx3YHv+VkDK+ZJpPX1sQELcPPmO3HNA+wyPxi99Z0CIbClWOKxYQC4HWgZ3b1VAb9I69XjWVkDi5sl3ZFhYQB6bZBm4dlpArNz/vmi3YEAoYcDyn0drQBiw/OfRwXdAub7miOC7cECtZuiU94JgQPCLdhuHE1NA4+ommp12SEBk2CBunnxAQGwM2iyFBTZA","dtype":"float64","shape":[24]}}},"id":"ddb750b7-b475-4a1c-9aae-4afe632d8eb7","type":"ColumnDataSource"},{"attributes":{},"id":"22abd4f5-f2b6-4da3-9ad1-3b9e2e76c65b","type":"BasicTicker"},{"attributes":{"line_alpha":{"value":0.1},"line_color":{"value":"#1f77b4"},"line_width":{"value":3},"x":{"field":"x"},"y":{"field":"y"}},"id":"2df8826c-cbd4-4f46-b5f5-578b54a2d5aa","type":"Line"},{"attributes":{"dimension":1,"plot":{"id":"62d37214-3643-46d4-b224-125b3119c3c0","subtype":"Figure","type":"Plot"},"ticker":{"id":"22abd4f5-f2b6-4da3-9ad1-3b9e2e76c65b","type":"BasicTicker"}},"id":"9dc9909f-96c2-4949-929e-1b0d36a7688c","type":"Grid"},{"attributes":{"below":[{"id":"eefb5563-1810-462d-b3ce-f6e762839b8e","type":"LinearAxis"}],"left":[{"id":"8eaafeb0-81e4-4d59-839d-3c0542e8aff8","type":"LinearAxis"}],"plot_width":750,"renderers":[{"id":"eefb5563-1810-462d-b3ce-f6e762839b8e","type":"LinearAxis"},{"id":"2c125320-f439-4542-8d17-2021bfabd8f4","type":"Grid"},{"id":"8eaafeb0-81e4-4d59-839d-3c0542e8aff8","type":"LinearAxis"},{"id":"9dc9909f-96c2-4949-929e-1b0d36a7688c","type":"Grid"},{"id":"49d0fa68-51be-4641-a19c-5c9175622704","type":"BoxAnnotation"},{"id":"769c511e-d448-49f9-9604-d0d764b548d5","type":"GlyphRenderer"}],"title":{"id":"8ca82301-d337-4c79-aa42-40bba6c1547c","type":"Title"},"toolbar":{"id":"5d6ba699-0dfc-47d1-9859-b6ced5aeceec","type":"Toolbar"},"x_range":{"id":"049b5813-dd0e-4597-8e7c-6ff86713fb2f","type":"DataRange1d"},"x_scale":{"id":"19aa9789-46cd-4dc3-8b41-194ce446bc74","type":"LinearScale"},"y_range":{"id":"0d3d9626-1fc6-48fa-a67a-96a259623346","type":"Range1d"},"y_scale":{"id":"c623488a-3594-4d36-a0f3-91b0ca23f8f5","type":"LinearScale"}},"id":"62d37214-3643-46d4-b224-125b3119c3c0","subtype":"Figure","type":"Plot"},{"attributes":{"bottom_units":"screen","fill_alpha":{"value":0.5},"fill_color":{"value":"lightgrey"},"left_units":"screen","level":"overlay","line_alpha":{"value":1.0},"line_color":{"value":"black"},"line_dash":[4,4],"line_width":{"value":2},"plot":null,"render_mode":"css","right_units":"screen","top_units":"screen"},"id":"49d0fa68-51be-4641-a19c-5c9175622704","type":"BoxAnnotation"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_scroll":"auto","active_tap":"auto","tools":[{"id":"3b8940a6-fbe3-4e92-b051-70be0f64cfca","type":"PanTool"},{"id":"cbc96173-9388-41a2-8352-8d3f4a883a26","type":"WheelZoomTool"},{"id":"6625d051-5d92-4310-8915-67172dff1eed","type":"BoxZoomTool"},{"id":"6117c7f3-3e84-45a4-9771-6fd558a79898","type":"ResetTool"},{"id":"840c8645-02c5-44c0-96aa-670ce2a46981","type":"UndoTool"},{"id":"97bc1f07-6f95-431f-ab68-72b5ff2bb4a3","type":"SaveTool"}]},"id":"5d6ba699-0dfc-47d1-9859-b6ced5aeceec","type":"Toolbar"},{"attributes":{"callback":null},"id":"049b5813-dd0e-4597-8e7c-6ff86713fb2f","type":"DataRange1d"},{"attributes":{"active":[0,1,2,3,4,5,6,7,8,9,10,11],"callback":null,"labels":["Jan.","Feb.","March","April","May","June","July","Aug.","Sep.","Oct.","Nov.","Dec."]},"id":"a0a1fa17-cf66-45fa-be83-85ac572fc6a4","type":"CheckboxButtonGroup"},{"attributes":{"callback":null,"end":1509408000000.0,"start":1380758400000.0,"title":"Date range","value":[1380758400000.0,1509408000000.0]},"id":"346699ff-11ca-4882-8445-34522cb2b955","type":"DateRangeSlider"},{"attributes":{"active":[0,1,2,3,4],"callback":null,"labels":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]},"id":"03b1053a-58a6-4751-b024-6f9cdc67ae26","type":"CheckboxButtonGroup"},{"attributes":{"children":[{"id":"caf0c1bb-ab82-40c6-9546-a5d06b4ce6e5","type":"WidgetBox"},{"id":"62d37214-3643-46d4-b224-125b3119c3c0","subtype":"Figure","type":"Plot"}]},"id":"8a866c4f-9d05-4170-a5ab-4f9be785fc97","type":"Row"},{"attributes":{"callback":null,"end":16,"format":"0","start":8,"title":"Hours of Daylight","value":[8,16]},"id":"ca42eb36-f672-43ad-9ebc-ff357d6575ee","type":"RangeSlider"},{"attributes":{},"id":"cbc96173-9388-41a2-8352-8d3f4a883a26","type":"WheelZoomTool"},{"attributes":{"callback":null,"end":23,"format":"0","start":0,"title":"Hour Range","value":[0,23]},"id":"bddfdf75-af53-43ec-bf6d-0de11973c5d0","type":"RangeSlider"},{"attributes":{"active":[0,1,2,3,4],"callback":null,"labels":["None","Fog","Rain","Snow","Thunderstorm"]},"id":"e19d7d8d-5135-4e35-bfd4-a63bdc777213","type":"CheckboxButtonGroup"},{"attributes":{"data_source":{"id":"ddb750b7-b475-4a1c-9aae-4afe632d8eb7","type":"ColumnDataSource"},"glyph":{"id":"6258658d-579f-4a76-92fa-25c87a10c0dc","type":"Line"},"hover_glyph":null,"muted_glyph":null,"nonselection_glyph":{"id":"2df8826c-cbd4-4f46-b5f5-578b54a2d5aa","type":"Line"},"selection_glyph":null,"view":{"id":"d4981a6d-6371-4505-a0b0-664ddeed3783","type":"CDSView"}},"id":"769c511e-d448-49f9-9604-d0d764b548d5","type":"GlyphRenderer"},{"attributes":{"callback":null,"end":2.5,"format":"0.00","start":0,"step":0.05,"title":"Inches of Rain per Day","value":[0,3]},"id":"34089a3f-c111-4a5f-af82-a201051bdf12","type":"RangeSlider"},{"attributes":{"plot":null,"text":"Bicycle Counts"},"id":"8ca82301-d337-4c79-aa42-40bba6c1547c","type":"Title"},{"attributes":{},"id":"3b8940a6-fbe3-4e92-b051-70be0f64cfca","type":"PanTool"},{"attributes":{"children":[{"id":"4f317520-a2d6-4b5f-867a-fcc4869cd6c3","type":"Select"},{"id":"e6b66ddc-0e19-49be-a414-b7c08c3a1b06","type":"RadioGroup"},{"id":"346699ff-11ca-4882-8445-34522cb2b955","type":"DateRangeSlider"},{"id":"a0a1fa17-cf66-45fa-be83-85ac572fc6a4","type":"CheckboxButtonGroup"},{"id":"03b1053a-58a6-4751-b024-6f9cdc67ae26","type":"CheckboxButtonGroup"},{"id":"bddfdf75-af53-43ec-bf6d-0de11973c5d0","type":"RangeSlider"},{"id":"ca42eb36-f672-43ad-9ebc-ff357d6575ee","type":"RangeSlider"},{"id":"e19d7d8d-5135-4e35-bfd4-a63bdc777213","type":"CheckboxButtonGroup"},{"id":"34089a3f-c111-4a5f-af82-a201051bdf12","type":"RangeSlider"}]},"id":"caf0c1bb-ab82-40c6-9546-a5d06b4ce6e5","type":"WidgetBox"},{"attributes":{"source":{"id":"ddb750b7-b475-4a1c-9aae-4afe632d8eb7","type":"ColumnDataSource"}},"id":"d4981a6d-6371-4505-a0b0-664ddeed3783","type":"CDSView"},{"attributes":{"children":[{"id":"8a866c4f-9d05-4170-a5ab-4f9be785fc97","type":"Row"}]},"id":"34575c90-2f9c-4893-9688-f90ab11f144e","type":"Column"},{"attributes":{},"id":"6117c7f3-3e84-45a4-9771-6fd558a79898","type":"ResetTool"}],"root_ids":["34575c90-2f9c-4893-9688-f90ab11f144e"]},"title":"Bicycle Counts","version":"0.12.10"}};
+                  var render_items = [{"docid":"41f37f78-c675-4b7f-b80b-b07b1eed9509","elementid":"69f00867-da08-4eb5-ad7c-e7602252cb8e","modelid":null}];
+              
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                }
+              
+                if (root.Bokeh !== undefined) {
+                  embed_document(root);
+                } else {
+                  var attempts = 0;
+                  var timer = setInterval(function(root) {
+                    if (root.Bokeh !== undefined) {
+                      embed_document(root);
+                      clearInterval(timer);
+                    }
+                    attempts++;
+                    if (attempts > 100) {
+                      console.log("Bokeh: ERROR: Unable to embed document because BokehJS library is missing")
+                      clearInterval(timer);
+                    }
+                  }, 10, root)
+                }
+              })(window);
+            });
+          };
+          if (document.readyState != "loading") fn();
+          else document.addEventListener("DOMContentLoaded", fn);
+        })();
+        
+        </script>
+    </body>
+</html>

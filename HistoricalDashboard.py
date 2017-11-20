@@ -1,14 +1,15 @@
 from os.path import dirname, join
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import pandas as pd
 from bokeh.layouts import row, widgetbox, layout
 from bokeh.models import ColumnDataSource,CheckboxButtonGroup, CustomJS, DatetimeTickFormatter, FuncTickFormatter
-from bokeh.models.widgets import Select, DateRangeSlider, RadioGroup, RangeSlider, Button, DataTable, TableColumn, DateFormatter
+from bokeh.models.widgets import DatePicker, Select, DateRangeSlider, RadioGroup, RangeSlider, Button, DataTable, TableColumn, DateFormatter
 from bokeh.io import curdoc
 from urllib.request import urlopen
 from bokeh.plotting import figure
 from bokeh.io import output_file, show
 import numpy as np
+import emoji
 
 #cd C:\Users\asher\Documents\GitHub\data602-finalproject 
 #bokeh serve HistoricalDashboard.py --show
@@ -18,6 +19,23 @@ import numpy as np
 colors = ['red', 'green', 'blue', 'orange', 'black', 'grey', 'brown',
                    'cyan', 'yellow', 'purple']
 
+# Counter locations for displaying to user
+counterNames = ["2nd Ave", "26th Ave", "39th Ave", "Burke Gilman Trail", "Broad", 
+                "Elliot", "Fremont Bridge",
+                "MTS Trail", "NW 58th St",  "Spokane St"]
+
+# Dictionary for converting full trail names to column numbers
+counterDict = {"Burke Gilman Trail":0,
+               "Broad": 1,
+               "Elliot": 2,
+               "Fremont Bridge": 3,
+               "MTS Trail": 4,
+               "NW 58th St": 5,
+               "2nd Ave": 6,
+               "Spokane St": 7,
+               "39th Ave": 8,
+               "26th Ave": 9}
+
 # Weather Coding Dictionary
 weatherDict = {0:"None", 
                1: "Fog", 
@@ -26,14 +44,14 @@ weatherDict = {0:"None",
                4:"Thunderstorm"}
 
 # Get dataframe of historical observations, weather, and daylight hours
-#histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
-#weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
-#daylightPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/daylightDF.csv"
+histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
+weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
+daylightPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/daylightDF.csv"
 
 # Local path for testing
-histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/histDF.csv"
-weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/weatherDF.csv"
-daylightPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/daylightDF.csv"
+#histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/histDF.csv"
+#weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/weatherDF.csv"
+#daylightPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/daylightDF.csv"
 
 #jsPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/download.js"
 
@@ -46,18 +64,19 @@ Indx = [] # Index to house dates
 for i in range(len(histDF)): 
     Indx.append(datetime.strptime(histDF.index[i], '%m/%d/%Y %H:%M'))
 histDF.index = Indx
+#histDF.index = histDF.index.to_pydatetime()
 
 Indx = [] # Index to house dates
 for i in range(len(weatherDF)): 
     Indx.append(datetime.strptime(weatherDF.index[i], '%Y-%m-%d').date())
 weatherDF.index = Indx
 
-Indx = [] # Index to house dates
+Indx = [] # Index to house hours of daylight per day
 for i in range(len(daylightDF)): 
     Indx.append(datetime.strptime(daylightDF.index[i], '%Y-%m-%d').date())
 daylightDF.index = Indx
 
-MyTools = "pan,wheel_zoom,box_zoom,reset,undo,save"
+MyTools = "pan,hover,wheel_zoom,box_zoom,reset,undo,save"
 
 def subsetMonth(monthList, df=histDF):
     # Return dataframe containing only the days of the week specified,
@@ -225,6 +244,24 @@ def TypicalWeek(df = histDF):
     df.index = indx
     return df
 
+def TypicalYear(df = histDF):
+    # Calculate the historical weekly sum
+    df = df.resample('7D').sum()
+    
+    # Convert each date to a week number
+    df.index = df.index.week
+
+    # Average counts by week number
+    df = df.groupby(df.index).mean()
+    
+    # Last week is only one day, so exclude it
+    df = df.iloc[0:52, :]
+    
+    # Convert indices to start at 0 instead of 1
+    df.index = list(range(52))
+    
+    return df
+
 # Set up data
 mydf = TypicalDay()  
 x =  np.array(mydf.index)*1000*60*60
@@ -234,9 +271,9 @@ source = ColumnDataSource(data=dict(x=x, y=y))
 
 # Set up plot
 plot = figure(plot_height=600, plot_width=750, title="Bicycle Counts",
-              tools=MyTools, y_range=[0,700])
+              tools=MyTools, y_range=[0,800])
               #x_range=[0, 23]
-plot.xaxis.axis_label = "Hour of the Day" # x axis label
+plot.xaxis.axis_label = "Date/Time" # x axis label
 #plot.xaxis.ticker = list(np.array([0, 6, 8, 10, 12, 14, 16, 18, 20, 
 #                              22]*1000*60*60)) # x axis tick marks
 plot.xaxis.formatter = DatetimeTickFormatter(hours = ['%I %p'], days = ['%a'])
@@ -249,41 +286,46 @@ plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
 ViewDropdown = Select(title = "View by Average...", value = "Day",
               options = ["Day", "Week", "Year", "Historical"])
 
-CounterRadio = RadioGroup(labels = list(histDF.columns), 
-                                   active = 3)
+CounterDropdown = Select(title = "Select Counter", value = "Fremont Bridge", 
+                             options = counterNames)
 
-DateSlider = DateRangeSlider(title="Date range", value=(date(2013, 10, 3), 
-                            date(2017, 10, 31)), start=date(2013, 10, 3), 
-                            end=date(2017, 10, 31), step=1)
+YearBoxes = CheckboxButtonGroup(labels = ["2012","'13", "'14", "'15", "'16", 
+                                          "2017"], 
+                         active=list(range(6)))
 
-MonthBoxes = CheckboxButtonGroup(labels = ["Jan.", "Feb.", "March", "April", 
-                                           "May", "June", "July", "Aug.", "Sep.",
-                                           "Oct.", "Nov.", "Dec."], 
+MonthBoxes = CheckboxButtonGroup(labels = ["Jan", "Feb", "March", "April", 
+                                           "May", "June", "July", "Aug", "Sep",
+                                           "Oct", "Nov", "Dec"], 
                                  active = list(range(12)))
-WeekdayBoxes = CheckboxButtonGroup(labels = ["Monday", "Tuesday", "Wednesday",
-                                              "Thursday", "Friday", "Saturday",
-                                              "Sunday"], 
-                                   active=list(range(5)))
+WeekdayBoxes = CheckboxButtonGroup(labels = ["Mo", "Tu", "We",
+                                              "Th", "Fr", "Sa",
+                                              "Su"], 
+                                   active=list(range(7)))
 HourSlider = RangeSlider(title="Hour Range", start=0, end=23, value=(0, 23), 
                          step=1, format='0')
 
 DaylightSlider = RangeSlider(title = "Hours of Daylight", start = 8, end = 16, 
                              value = (8,16), step = 1, format = "0")
 
-WeatherBoxes = CheckboxButtonGroup(labels = ["None", "Fog", "Rain", "Snow", 
-                                             "Thunderstorm"], 
+WeatherBoxes = CheckboxButtonGroup(labels = [emoji.emojize(':sunny: :cloud:', use_aliases=True), 
+                                             emoji.emojize('fog :foggy:', use_aliases=True), 
+                                             emoji.emojize(':umbrella:', use_aliases=True), 
+                                             emoji.emojize(':snowflake:', use_aliases=True), 
+                                             emoji.emojize(':zap:', use_aliases=True), 
+                                             ], 
                                    active = [0,1,2,3,4])
 
 RainSlider = RangeSlider(title="Inches of Rain per Day", start = 0, end = 2.5, 
-                         value = (0,3), step = 0.05, format = "0.00")
+                         value = (0,2.5), step = 0.05, format = "0.00")
 
 # Set up callbacks
 def update_data(attrname, old, new):
 
     # Get the current slider values
     view = ViewDropdown.value
-    counter = CounterRadio.active
-    dates = DateSlider.value
+    counter = counterDict[CounterDropdown.value]
+    start = YearBoxes.active[0] + 2012
+    end = YearBoxes.active[-1] + 2012
     months = MonthBoxes.active
     weekdays = WeekdayBoxes.active
     hours = np.round(HourSlider.value)
@@ -295,9 +337,13 @@ def update_data(attrname, old, new):
     weatherList = []
     for i in weather: weatherList.append(weatherDict[i])
 
+    # Convert start and end from ints to datetime 
+    # due to Bokeh bug: https://github.com/bokeh/bokeh/issues/6895#event-1242295796
+    yearRange = list(range(start, end + 1))
+
     # Generate the new dataframe
     mydf = histDF.copy(deep = True)
-    mydf = mydf.loc[dates[0]:dates[1]] # Subset dates 
+    mydf = mydf.loc[mydf.index.year.isin(yearRange)] # Subset dates 
     mydf = mydf[mydf.index.month.isin(months)] # Subset months
     mydf = mydf[mydf.index.weekday.isin(weekdays)] # Subset weekdays 
     mydf = subsetHours(start = hours[0], end = hours[1], df = mydf) # Subset hours
@@ -305,13 +351,24 @@ def update_data(attrname, old, new):
     mydf = subsetWeather(weatherList, df = mydf)
     mydf = subsetRain(df = mydf, low = rain[0], high = rain[1])
     
-    if view == "Week":
-        mydf = TypicalWeek(df = mydf)
-    else:
-        mydf = TypicalDay(df = mydf)
+
+    if view == "Year": # Year view has counts by week
+        mydf = TypicalYear(df = mydf)
+        x = np.array(mydf.index)*1000*60*60*24*7 # Convert ms to weeks
+    else: # For weekly and daily views, which have counts by hour
+        if view == "Week":
+            mydf = TypicalWeek(df = mydf)
+        else:
+            mydf = TypicalDay(df = mydf)
+        x =  np.array(mydf.index)*1000*60*60 # Convert ms to hours
         
-    x =  np.array(mydf.index)*1000*60*60 # Convert ms to hours
+    
     y = mydf.iloc[:, counter].astype(float)
+    
+    #if counter == 3:
+    #    plot.plot_height = 800
+    #else:
+    #    plot.plot_height = 400
     
     #x =  np.array(mydf.index)*1000*60*60 # Convert ms to hours
     
@@ -321,14 +378,14 @@ def update_data(attrname, old, new):
         
     source.data = dict(x=x, y=y)
     
-for w in [ViewDropdown, DateSlider, HourSlider, DaylightSlider, RainSlider]:
+for w in [ViewDropdown, HourSlider, DaylightSlider, RainSlider, CounterDropdown]:
     w.on_change('value', update_data)
     
-for z in [MonthBoxes, WeekdayBoxes, WeatherBoxes, CounterRadio]:
+for z in [YearBoxes, MonthBoxes, WeekdayBoxes, WeatherBoxes]:
     z.on_change('active', update_data)
 
 # Set up layouts and add to document
-inputs = widgetbox(ViewDropdown, CounterRadio, DateSlider, MonthBoxes, WeekdayBoxes, 
+inputs = widgetbox(ViewDropdown, CounterDropdown, YearBoxes, MonthBoxes, WeekdayBoxes, 
                    HourSlider, DaylightSlider, WeatherBoxes, RainSlider)
 
 
