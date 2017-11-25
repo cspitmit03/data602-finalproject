@@ -5,6 +5,7 @@ import numpy as np
 import calendar
 from fbprophet import Prophet
 import matplotlib.pyplot as plt
+import holidays
 # from pd.io.json import json_normalize
 
 # Dictionary of Counters and their JSON file location
@@ -60,62 +61,7 @@ FremontDF = pd.concat([dailyDF["Fremont"], sunsAndBoolsDF, weatherDF], axis = 1)
 FremontPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\FremontAndPredictors.csv"
         
 FremontDF.to_csv(FremontPath)
-'''
-
-
-def getSunsAndBools(end = datetime(2017, 10, 31)):
-
-    # Create a list containing all dates
-    start = datetime(2012, 10, 3) # First day of data
-    duration = (end - start).days + 1 # length of duration in days
-    
-    dateList = []
-    for i in range(duration):
-        dateList.append((start + timedelta(days=i)).date())
-        
-    axis = 23.44
-    latitude = 47.61
-    
-    # Given start and end dates, return an array containing the hours of sunlight
-    # for each date
-    sunlight = []
-    for i in range(duration):
-        day = (dateList[i] - pd.datetime(2000, 12, 21).date()).days # difference in days
-        day %= 365.25
-        m = 1. - np.tan(np.radians(latitude)) * np.tan(np.radians(axis) * np.cos(day * np.pi / 182.625))
-        m = max(0, min(m, 2))
-        sunlight.append(24. * np.degrees(np.arccos(1 - m)) / 180.)
-    
-    # Create boolean columns for each day of the week
-    weekdays = []
-    for j in range(7):
-        weekday = []
-        for i in range(duration):
-            weekday.append((dateList[i].weekday() == j))
-        weekdays.append(weekday)
-    
-    # Create a boolean isMay, because May is bike to work month, and may have 
-    # additional ridership as a result, aside from other factors    
-    isMay = []
-    for i in range(duration):
-        isMay.append(dateList[i].month == 5) # True if in May, otherwise false
-    
-    SunsAndBools = pd.DataFrame({'Sunlight': sunlight,
-                                'isMay': isMay,
-                                'Monday': weekdays[0],
-                                'Tuesday':weekdays[1],
-                                'Wednesday': weekdays[2],
-                                'Thursday': weekdays[3],
-                                'Friday': weekdays[4],
-                                'Saturday': weekdays[5],
-                                'Sunday': weekdays[6]}, index = dateList)
-    
-    # Sunlight code is courtesy of Jake Vanderplas, an astronomy PHD who literally wrote 
-    # the book on data science for Python, and also investigated Seattle cycling: 
-    # http://jakevdp.github.io/blog/2014/06/10/is-seattle-really-seeing-an-uptick-in-cycling/
-    
-    return SunsAndBools
-    
+'''    
 
 # Get JSON files of a single counter; 
 # "counter" is the name of a counter, a string, like "BGT"
@@ -273,43 +219,95 @@ def getDailyDF(df):
     
     return df
 
+def getSunsAndBools(end = datetime(2017, 10, 31)):
 
+    # Create a list containing all dates
+    start = datetime(2012, 10, 3) # First day of data
+    duration = (end - start).days + 1 # length of duration in days
     
-def subsetWeather(weather, df):
-    # Return dataframe that has the specified weather
-    # Options: Sunny, cloudy, rain, storm
-    if weather == "All":
-        return df
-    else:
-        return df[df.Weather == weather]
-
-'''def subsetSeason(season, df):
-    # Return dataframe that has the specified season
-    # Options: Spring, Summer, Fall, Winter, All
-    return df
-
-def subsetCounter(counters):
-    # Remove specified counters from dataset'''
-
-def subsetTemp(low, high, df):
-    # Return dataframe containing only days where average temp is within bounds
-    # specified
-    return df[df.Temp >= low and df.Temp  <= high]
-
-def subsetWeekday(daylist, df):
-    # Return dataframe containing only the days of the week specified,
-    # where 0 = Monday, 1 = Tuesday, etc.
-    df[df.index.weekday.isin(daylist)]
-    return df
-
-def addWeatherDummies(df):
-    df.Events = weatherDF.Events.replace(np.nan, '', regex=True)
-    df["DidRain"] = df['Events'].str.contains("Rain")
-    df["DidFog"] = df['Events'].str.contains("Fog")
-    df["DidSnow"] = df['Events'].str.contains("Snow")
-    df["DidThunder"] = df['Events'].str.contains("Thunderstorm")
+    dateList = []
+    for i in range(duration):
+        dateList.append((start + timedelta(days=i)).date())
+        
+    axis = 23.44
+    latitude = 47.61
     
-    return df
+    # Given start and end dates, return an array containing the hours of sunlight
+    # for each date
+    sunlight = []
+    for i in range(duration):
+        day = (dateList[i] - pd.datetime(2000, 12, 21).date()).days # difference in days
+        day %= 365.25
+        m = 1. - np.tan(np.radians(latitude)) * np.tan(np.radians(axis) * np.cos(day * np.pi / 182.625))
+        m = max(0, min(m, 2))
+        sunlight.append(24. * np.degrees(np.arccos(1 - m)) / 180.)
+    
+    # Create boolean columns for each day of the week
+    weekend = []
+    for i in range(duration):
+        weekend.append((dateList[i].weekday() == 5 or dateList[i].weekday() == 6))
+    
+    # Create a boolean isMay, because May is bike to work month, and may have 
+    # additional ridership as a result, aside from other factors    
+    isMay = []
+    for i in range(duration):
+        isMay.append(dateList[i].month == 5) # True if in May, otherwise false
+    
+    SunsAndBools = pd.DataFrame({'Sunlight': sunlight,
+                                'isMay': isMay,
+                                'Weekend': weekend}, index = dateList)
+    
+    # Sunlight code is courtesy of Jake Vanderplas, an astronomy PHD who literally wrote 
+    # the book on data science for Python, and also investigated Seattle cycling: 
+    # http://jakevdp.github.io/blog/2014/06/10/is-seattle-really-seeing-an-uptick-in-cycling/
+    
+    return SunsAndBools
+
+def update():
+    raw = getRawData()
+    dfList = []
+    for i in range(len(raw)):
+        dfList.append(raw[i].copy(deep = True)) # Put raw counter data into list of lists
+    totalDF = modifyData(dfList) # Put list of lists into single dataframe
+    totalDF = markNulls(totalDF) # Replace nulls with imputed values
+    dailyDF = getDailyDF(totalDF) # Convert hourly to weekly data
+    daylightDF = getSunsAndBools() # Add daylight data and weekend indicator variable
+    
+    weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
+    weatherDF = pd.read_csv(weatherPath, index_col = 0)
+    Indx = [] # Index to house dates
+    for i in range(len(weatherDF)): 
+        Indx.append(datetime.strptime(weatherDF.index[i], '%Y-%m-%d').date())
+    weatherDF.index = Indx
+    
+    predictorsDF = pd.concat([dailyDF, daylightDF, weatherDF], axis = 1)
+    
+    # Create columns that indicate holidays and business days
+    WA_holidays = holidays.UnitedStates(state = "WA") # Create list of holidays
+    Holiday = []
+    for i in range(len(predictorsDF.index)): 
+        Holiday.append(predictorsDF.index[i] in WA_holidays)
+    predictorsDF["Holiday"] = Holiday # Mark day as holidays
+    predictorsDF["BusinessDay"] = ((predictorsDF.Weekend == False) & (predictorsDF.Holiday == False))
+    
+    # Create a column that is number of week in dataset, for a secular trend
+    # e.g. that cycling is changing in volume over time, in addition to other
+    # factors. Also create a Friday column, as Fridays may see reduced ridership 
+    # as the weekend approaches
+    WeekNumber = []
+    Friday = []
+    for i in range(len(predictorsDF.index)):
+        WeekNumber.append(int(i/7))
+        Friday.append(predictorsDF.index[i] == 4)
+    predictorsDF["WeekNumber"] = WeekNumber
+    predictorsDF["Friday"] = Friday
+    
+    
+    
+    predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
+    predictorsDF.to_csv(predPath)
+    
+    return
 
 # Update Bike Counts (to be performed monthly, followed by a push to github)
 def updateData():
@@ -346,8 +344,6 @@ def updateData():
     
     weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\weatherDF.csv"
     weatherDF = pd.read_csv(weatherPath, index_col = 0)
-    weatherDF = addWeatherDummies(weatherDF) # Create new Weather DF with dummy variables, like DidRain
-    weatherDummyPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\weatherDummyDF.csv"
     weatherDF.to_csv(weatherDummyPath)
     
     return
