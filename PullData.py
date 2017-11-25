@@ -396,9 +396,9 @@ def updateDaylightCSV(end = datetime(2017, 10, 31)):
     return 
         
         
-weeklyDF = dailyDF.rolling(window = 30).mean()
-ax = weeklyDF.plot(figsize=(12, 8))
-ax.set_ylabel('Monthly Number of Airline Passengers')
-ax.set_xlabel('Date')
+#weeklyDF = dailyDF.rolling(window = 30).mean()
+#ax = weeklyDF.plot(figsize=(12, 8))
+#ax.set_ylabel('Monthly Number of Airline Passengers')
+#ax.set_xlabel('Date')
 
-plt.show()
+#plt.show()

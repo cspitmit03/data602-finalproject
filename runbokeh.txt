@@ -1,0 +1,3 @@
+cd C:\Users\asher\Documents\GitHub\data602-finalproject
+bokeh serve HistoricalDashboard.py --show
+
