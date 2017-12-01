@@ -1,13 +1,12 @@
-from os.path import dirname, join
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 import pandas as pd
-from bokeh.layouts import row, widgetbox, layout
-from bokeh.models import ColumnDataSource,CheckboxButtonGroup, CustomJS, DatetimeTickFormatter, FuncTickFormatter
-from bokeh.models.widgets import DatePicker, Select, DateRangeSlider, RadioGroup, RangeSlider, Button, DataTable, TableColumn, DateFormatter
+from bokeh.layouts import widgetbox, layout
+from bokeh.models import ColumnDataSource,CheckboxButtonGroup, DatetimeTickFormatter
+from bokeh.models.widgets import Select, RangeSlider
 from bokeh.io import curdoc
-from urllib.request import urlopen
+#from urllib.request import urlopen
 from bokeh.plotting import figure
-from bokeh.io import output_file, show
+#from bokeh.io import output_file, show
 import numpy as np
 import emoji
 
@@ -44,14 +43,14 @@ weatherDict = {0:"None",
                4:"Thunderstorm"}
 
 # Get dataframe of historical observations, weather, and daylight hours
-histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
-weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
-daylightPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/daylightDF.csv"
+#histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
+#weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
+#daylightPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/daylightDF.csv"
 
 # Local path for testing
-#histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/histDF.csv"
-#weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/weatherDF.csv"
-#daylightPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/daylightDF.csv"
+histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/histDF.csv"
+weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/weatherDF.csv"
+daylightPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/daylightDF.csv"
 
 #jsPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/download.js"
 
@@ -194,6 +193,26 @@ def TypicalYear(df = histDF):
     
     return df
 
+def HistoricalView(df = histDF.copy()):
+    # Calculate the historical weekly sum
+    df = df.resample('7D').sum()
+    
+    epoch = datetime.utcfromtimestamp(0)
+
+    df.index = (df.index - epoch).total_seconds() * 1000.0
+    
+    # Convert each date to a week number
+    #df.index = df.index.week + (df.index.year - 1970)*52
+    
+
+    # Average counts by week number
+    #df = df.groupby(df.index).mean()
+    
+    # Convert indices to start at 0 instead of 1
+    #df.index = list(range(52))
+    
+    return df
+
 # Set up data
 mydf = TypicalDay()  
 x =  np.array(mydf.index)*1000*60*60
@@ -201,16 +220,26 @@ x =  np.array(mydf.index)*1000*60*60
 y = mydf.Fremont
 source = ColumnDataSource(data=dict(x=x, y=y))
 
-# Set up plot
-plot = figure(plot_height=600, plot_width=750, title="Bicycle Counts",
-              tools=MyTools, y_range=[0,800])
-              #x_range=[0, 23]
-plot.xaxis.axis_label = "Date/Time" # x axis label
-#plot.xaxis.ticker = list(np.array([0, 6, 8, 10, 12, 14, 16, 18, 20, 
-#                              22]*1000*60*60)) # x axis tick marks
-plot.xaxis.formatter = DatetimeTickFormatter(hours = ['%I %p'], days = ['%a'])
-plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
+def plotBokeh(ymax = 800):
+    
+    # Set up plot
+    plot = figure(plot_height=600, plot_width=800, title="Bicycle Counts",
+                  tools=MyTools) # y_range=[0, ymax])
+                  #x_range=[0, 23]
+    plot.xaxis.axis_label = "Date/Time" # x axis label
+    #plot.xaxis.ticker = list(np.array([0, 6, 8, 10, 12, 14, 16, 18, 20, 
+    #                              22]*1000*60*60)) # x axis tick marks
+    plot.xaxis.formatter = DatetimeTickFormatter(hours = ['%I %p'], 
+                                                 days = ['%a'], 
+                                                 months = ['%b %Y']) 
+                                                 #years = ['%Y'])
+    plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
+    
+    plot.yaxis.major_label_orientation = "vertical"
+    
+    return plot
 
+plot = plotBokeh()
 
 # Widgets section
 
@@ -284,16 +313,26 @@ def update_data(attrname, old, new):
     mydf = subsetRain(df = mydf, low = rain[0], high = rain[1])
     
 
-    if view == "Year": # Year view has counts by week
-        mydf = TypicalYear(df = mydf)
-        x = np.array(mydf.index)*1000*60*60*24*7 # Convert ms to weeks
-    else: # For weekly and daily views, which have counts by hour
-        if view == "Week":
-            mydf = TypicalWeek(df = mydf)
-        else:
-            mydf = TypicalDay(df = mydf)
-        x =  np.array(mydf.index)*1000*60*60 # Convert ms to hours
+
+    if view == "Historical":
+        mydf = HistoricalView(df = mydf)   
         
+        # Start dataframe at first non-null index
+        first = mydf.iloc[:, counter].first_valid_index()
+        mydf = mydf.loc[first: mydf.index[-1]]
+        x = mydf.index
+        #x = np.array(mydf.index)*1000*60*60*24*7 # Convert ms to weeks
+    else: # For weekly and daily views, which have counts by hour
+        if view == "Year": # Year view has counts by week
+            mydf = TypicalYear(df = mydf)
+            x = np.array(mydf.index)*1000*60*60*24*7 # Convert ms to weeks        
+        else: 
+            if view == "Week":
+                mydf = TypicalWeek(df = mydf)
+            else: # Day view
+                mydf = TypicalDay(df = mydf)
+            
+            x =  np.array(mydf.index)*1000*60*60 # Convert ms to hours
     
     y = mydf.iloc[:, counter].astype(float)
     
@@ -323,7 +362,7 @@ inputs = widgetbox(ViewDropdown, CounterDropdown, YearBoxes, MonthBoxes, Weekday
 
 lay = layout([
         [inputs, plot]
-        ], sizing_mode = 'fixed')
+        ])#, sizing_mode = 'fixed')
 #curdoc().add_root(row(inputs, plot, width=800))
 curdoc().add_root(lay)    
 curdoc().title = "Bicycle Counts"
