@@ -1,10 +1,10 @@
 import pandas as pd
-import matplotlib as plt
 import numpy as np
 from datetime import datetime, timedelta
 from fbprophet import Prophet
 
-predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
+#predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
+predPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/predictorsDF.csv"
 predictorsDF = pd.read_csv(predPath, index_col = 0)
 predictorsDF["logPrecip"] = np.log(predictorsDF["Precip"]+1) # Add a log(precipitation) column
 
