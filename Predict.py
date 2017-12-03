@@ -2,11 +2,13 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from fbprophet import Prophet
+import matplotlib.pyplot as plt
 
 #predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
 predPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/predictorsDF.csv"
 predictorsDF = pd.read_csv(predPath, index_col = 0)
 predictorsDF["logPrecip"] = np.log(predictorsDF["Precip"]+1) # Add a log(precipitation) column
+WeekdayNames = ['Monday', 'Tuesday', 'Weds', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 Indx = [] # Index to hold dates
 for i in range(len(predictorsDF)): 
@@ -106,6 +108,45 @@ def PlotTrendAnalysis(Models, counterNumber = 3):
     
     return
 
+def PlotHistoricalModel(Models, counterNumber = 3):
+    # Plots the historical trends as detected by the model
+    
+    if counterNumber == 3: k = 0 # Fremont, started 10/3/2012
+    elif counterNumber == 6: k = 820 # Second St, started 1/1/2015
+    else: k = 455    # All others, started 1/1/2014
+    
+    future = pd.DataFrame({'TempHi': predictorsDF["TempHi"][k:],
+                      'logPrecip': predictorsDF["logPrecip"][k:],
+                      'ds': predictorsDF.index[k:],
+                      'floor': 0,
+                      'cap': max(predictorsDF.iloc[k:, counterNumber][k:])},
+                     index = predictorsDF.index[k:])
+    
+    forecast = Models[counterNumber].predict(future)
+    Models[counterNumber].plot(forecast)
+    
+    return
+
+
+def PlotCounterForecast(CounterNumber, ForecastTable):
+    objects = []
+    for i in range(ForecastTable.shape[0]): 
+        objects.append(WeekdayNames[ForecastTable.index[i].weekday()])
+    objects 
+    #objects = ('Python', 'C++', 'Java', 'Perl', 'Scala', 'Lisp')
+    y_pos = np.arange(len(objects))
+    performance = ForecastTable.iloc[:, CounterNumber]
+
+    plt.bar(y_pos, performance, align='center', alpha=0.5)
+    plt.xticks(y_pos, objects)
+    plt.ylabel('Bicycle Count')
+    plt.title('Seven Day Forecast of Counter ' + ForecastTable.columns[CounterNumber])
+
+    plt.show()
+
+PlotCounterForecast(3)
+
 Models = CreateModels()
 ForecastTable, Forecasts = GetForecastTable(Models, days = 7)
-PlotTrendAnalysis(Models, counterNumber = 3)
+#PlotTrendAnalysis(Models, counterNumber = 3)
+#PlotHistoricalModel(Models, counterNumber = 3)
