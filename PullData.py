@@ -127,7 +127,7 @@ def markNulls(totalDF):
     
     # These nulls are then replaced by imputed values calculated as a ratio to 
     # the Fremont values. For missing Fremont values, these are imputed by the 
-    # average of the datapoints one week before and after
+    # average of the datapoints one week before and after on Fremont
         
     # Impute Missing Fremont values: Average of t - 1 week, t + 1 week
     totalDF.loc["6/14/2013 9:00", "Fremont"] = (totalDF.loc["6/7/2013 9:00", "Fremont"] + totalDF.loc["6/21/2013 9:00", "Fremont"])/2 

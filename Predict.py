@@ -10,6 +10,10 @@ predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.c
 predictorsDF = pd.read_csv(predPath, index_col = 0)
 predictorsDF["logPrecip"] = np.log(predictorsDF["Precip"]+1) # Add a log(precipitation) column
 WeekdayNames = ['Monday', 'Tuesday', 'Weds', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+counterNames = ["Burke Gilman Trail", "Broad", "Elliot", "Fremont Bridge",
+                "MTS Trail", "NW 58th St", "2nd Ave", "Spokane St", 
+                "39th Ave", "26th Ave", "Total"]
+
 
 Indx = [] # Index to hold dates
 for i in range(len(predictorsDF)): 
@@ -87,7 +91,8 @@ def GetForecastTable(Models, days = 7):
         Forecasts.append(Models[i].predict(future))
         ForecastTable[predictorsDF.columns[i]] = Forecasts[i]['yhat'].values# Create column for each counter forecast
         
-    ForecastTable = round(ForecastTable)
+    ForecastTable = int(round(ForecastTable))
+    #ForecastTable.columns = counterNames
     ForecastTable[ForecastTable < 0 ] = 0
     return ForecastTable, Forecasts
 
@@ -160,11 +165,16 @@ def PlotSecularTrend(Models, counterNumber):
     
     forecast = Models[counterNumber].predict(future)
     
-
+    # Calculate Rate of Change for the last 365 days
+    GrowthRate = 1000*(forecast.trend[-1:].values/forecast.trend[-365:-364].values) - 1000
+    GrowthRate = int(GrowthRate)/10
+    
     
     sns.set_style("darkgrid")
     sns.set(font_scale = 1.5)
     plt.plot_date(forecast.ds, forecast.trend)
+    plt.suptitle(counterNames[counterNumber] + " Counter: " 
+                  + str(GrowthRate) + "% Trailing Annual Growth Rate")
     plt.show()
     return
     
