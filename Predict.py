@@ -3,9 +3,10 @@ import numpy as np
 from datetime import datetime, timedelta
 from fbprophet import Prophet
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-#predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
-predPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/predictorsDF.csv"
+predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
+#predPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/predictorsDF.csv"
 predictorsDF = pd.read_csv(predPath, index_col = 0)
 predictorsDF["logPrecip"] = np.log(predictorsDF["Precip"]+1) # Add a log(precipitation) column
 WeekdayNames = ['Monday', 'Tuesday', 'Weds', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -20,11 +21,12 @@ def CreateModels():
 # Create a list of Prophet forecasts, one series for each counter
     Models = []
     
-    for i in range(10):
+    for i in range(11):
         # Start dataframe at each counter with first date counter was active.
         # All counters except Fremont and Second began on 1/1/2014
         if predictorsDF.columns[i] == 'Fremont': k = 0 # 10/3/2012
-        elif predictorsDF.columns[i] == 'Second': k = 820 # 1/1/2015
+        elif (predictorsDF.columns[i] == 'Second') | (predictorsDF.columns[i] == 'Total') : 
+            k = 820 # 1/1/2015
         else: k = 455    #1/1/2014
         
         df = pd.DataFrame(data = {'ds': predictorsDF.index[k:], # dates
@@ -89,11 +91,11 @@ def GetForecastTable(Models, days = 7):
     ForecastTable[ForecastTable < 0 ] = 0
     return ForecastTable, Forecasts
 
-def PlotTrendAnalysis(Models, counterNumber = 3):
+def PlotTrendAnalysis(Models, counterNumber = 10):
     # Plots the historical trends as detected by the model
     
     if counterNumber == 3: k = 0 # Fremont, started 10/3/2012
-    elif counterNumber == 6: k = 820 # Second St, started 1/1/2015
+    elif (counterNumber == 6) | (counterNumber == 10): k = 820 # Second St, started 1/1/2015
     else: k = 455    # All others, started 1/1/2014
     
     future = pd.DataFrame({'TempHi': predictorsDF["TempHi"][k:],
@@ -108,11 +110,11 @@ def PlotTrendAnalysis(Models, counterNumber = 3):
     
     return
 
-def PlotHistoricalModel(Models, counterNumber = 3):
+def PlotHistoricalModel(Models, counterNumber = 10):
     # Plots the model against past data
     
     if counterNumber == 3: k = 0 # Fremont, started 10/3/2012
-    elif counterNumber == 6: k = 820 # Second St, started 1/1/2015
+    elif (counterNumber == 6) | (counterNumber == 10): k = 820 # Second St, started 1/1/2015
     else: k = 455    # All others, started 1/1/2014
     
     future = pd.DataFrame({'TempHi': predictorsDF["TempHi"][k:],
@@ -143,10 +145,33 @@ def PlotCounterForecast(CounterNumber, ForecastTable):
     plt.title('Seven Day Forecast of Counter ' + ForecastTable.columns[CounterNumber])
 
     plt.show()
+    
+def PlotSecularTrend(Models, counterNumber):
+    if counterNumber == 3: k = 0 # Fremont, started 10/3/2012
+    elif (counterNumber == 6) | (counterNumber == 10): k = 820 # Second St, started 1/1/2015
+    else: k = 455    # All others, started 1/1/2014
+    
+    future = pd.DataFrame({'TempHi': predictorsDF["TempHi"][k:],
+                      'logPrecip': predictorsDF["logPrecip"][k:],
+                      'ds': predictorsDF.index[k:],
+                      'floor': 0,
+                      'cap': max(predictorsDF.iloc[k:, counterNumber][k:])},
+                     index = predictorsDF.index[k:])
+    
+    forecast = Models[counterNumber].predict(future)
+    
+
+    
+    sns.set_style("darkgrid")
+    sns.set(font_scale = 1.5)
+    plt.plot_date(forecast.ds, forecast.trend)
+    plt.show()
+    return
+    
 
 PlotCounterForecast(3)
 
 Models = CreateModels()
 ForecastTable, Forecasts = GetForecastTable(Models, days = 7)
-#PlotTrendAnalysis(Models, counterNumber = 3)
+PlotTrendAnalysis(Models, counterNumber = 10)
 #PlotHistoricalModel(Models, counterNumber = 3)
