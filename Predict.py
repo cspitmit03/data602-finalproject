@@ -109,7 +109,7 @@ def PlotTrendAnalysis(Models, counterNumber = 3):
     return
 
 def PlotHistoricalModel(Models, counterNumber = 3):
-    # Plots the historical trends as detected by the model
+    # Plots the model against past data
     
     if counterNumber == 3: k = 0 # Fremont, started 10/3/2012
     elif counterNumber == 6: k = 820 # Second St, started 1/1/2015
