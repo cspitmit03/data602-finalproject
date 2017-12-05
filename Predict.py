@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 from fbprophet import Prophet
 import matplotlib.pyplot as plt
 import seaborn as sns
+from bokeh.plotting import figure, show, output_file
+from bokeh.models import FuncTickFormatter
+
 
 predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
 #predPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/predictorsDF.csv"
@@ -177,6 +180,34 @@ def PlotSecularTrend(Models, counterNumber):
                   + str(GrowthRate) + "% Trailing Annual Growth Rate")
     plt.show()
     return
+
+
+def plotForecast(ForecastTable, counterNumber): 
+    
+    dayNames = []
+    for i in range(ForecastTable.shape[0]): 
+        dayNames.append(WeekdayNames[ForecastTable.index[i].weekday()])
+
+    output_file("ForecastBarPlot.html")
+
+
+    p = figure(plot_width=600, plot_height=400, 
+               title = "7 Day Bicycle Count Forecast for " + counterNames[counterNumber])
+    p.vbar(x=[0,1,2,3,4,5,6], width=0.5, bottom=0,
+       top=ForecastTable.iloc[:, counterNumber], color="DeepSkyBlue")
+    
+    label_dict = {}
+    for i, s in enumerate(dayNames):
+        label_dict[i] = s
+
+    p.xaxis.formatter = FuncTickFormatter(code="""
+        var labels = %s;
+        return labels[tick];
+    """ % label_dict)
+
+    show(p)
+    return p
+
 
 
 Models = CreateModels()
