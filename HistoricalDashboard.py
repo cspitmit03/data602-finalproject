@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime #, date
 import pandas as pd
 from bokeh.layouts import widgetbox, layout
 from bokeh.models import ColumnDataSource,CheckboxButtonGroup, DatetimeTickFormatter
@@ -12,11 +12,6 @@ import emoji
 
 #cd C:\Users\asher\Documents\GitHub\data602-finalproject 
 #bokeh serve HistoricalDashboard.py --show
-
-
-# Colors for plotting Counters
-colors = ['red', 'green', 'blue', 'orange', 'black', 'grey', 'brown',
-                   'cyan', 'yellow', 'purple']
 
 # Counter locations for displaying to user
 counterNames = ["2nd Ave", "26th Ave", "39th Ave", "Burke Gilman Trail", "Broad", 
@@ -43,20 +38,12 @@ weatherDict = {0:"None",
                4:"Thunderstorm"}
 
 # Get dataframe of historical observations, weather, and daylight hours
-#histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
-#weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
-#daylightPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/daylightDF.csv"
+histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
+weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
 
-# Local path for testing
-histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/histDF.csv"
-weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/weatherDF.csv"
-daylightPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject/daylightDF.csv"
-
-#jsPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/download.js"
 
 histDF = pd.read_csv(histPath, index_col = 0) # From Seattle Data Portal
 weatherDF = pd.read_csv(weatherPath, index_col = 0) # From WeatherUnderground
-daylightDF = pd.read_csv(daylightPath, index_col = 0) # From jakevdp formula
 
 # Set indices of hist and weather as datetime & date objects, respectively
 Indx = [] # Index to house dates
@@ -69,11 +56,6 @@ Indx = [] # Index to house dates
 for i in range(len(weatherDF)): 
     Indx.append(datetime.strptime(weatherDF.index[i], '%Y-%m-%d').date())
 weatherDF.index = Indx
-
-Indx = [] # Index to house hours of daylight per day
-for i in range(len(daylightDF)): 
-    Indx.append(datetime.strptime(daylightDF.index[i], '%Y-%m-%d').date())
-daylightDF.index = Indx
 
 MyTools = "pan,hover,wheel_zoom,box_zoom,reset,undo,save"
 
@@ -146,7 +128,7 @@ def subsetWeather(weatherList, wdf = weatherDF, df = histDF):
     
     return filterDF
 
-def subsetDaylight(df = histDF, ddf = daylightDF, low=8, high=16):
+def subsetDaylight(df = histDF, ddf = weatherDF, low=8, high=16):
     # Function for filtering dataset by hours of sunlight for each date
     
     # Create list of dates that meet filter criteria
@@ -200,16 +182,6 @@ def HistoricalView(df = histDF.copy()):
     epoch = datetime.utcfromtimestamp(0)
 
     df.index = (df.index - epoch).total_seconds() * 1000.0
-    
-    # Convert each date to a week number
-    #df.index = df.index.week + (df.index.year - 1970)*52
-    
-
-    # Average counts by week number
-    #df = df.groupby(df.index).mean()
-    
-    # Convert indices to start at 0 instead of 1
-    #df.index = list(range(52))
     
     return df
 
@@ -265,7 +237,8 @@ WeekdayBoxes = CheckboxButtonGroup(labels = ["Mo", "Tu", "We",
 HourSlider = RangeSlider(title="Hour Range", start=0, end=23, value=(0, 23), 
                          step=1, format='0')
 
-DaylightSlider = RangeSlider(title = "Hours of Daylight", start = 8, end = 16, 
+DaylightSlider = RangeSlider(title = "Hours of Daylight per day", 
+                             start = 8, end = 16, 
                              value = (8,16), step = 1, format = "0")
 
 WeatherBoxes = CheckboxButtonGroup(labels = [emoji.emojize(':sunny: :cloud:', use_aliases=True), 
@@ -311,7 +284,6 @@ def update_data(attrname, old, new):
     mydf = subsetDaylight(df = mydf, low = light[0], high = light[1])
     mydf = subsetWeather(weatherList, df = mydf)
     mydf = subsetRain(df = mydf, low = rain[0], high = rain[1])
-    
 
 
     if view == "Historical":
@@ -335,18 +307,7 @@ def update_data(attrname, old, new):
             x =  np.array(mydf.index)*1000*60*60 # Convert ms to hours
     
     y = mydf.iloc[:, counter].astype(float)
-    
-    #if counter == 3:
-    #    plot.plot_height = 800
-    #else:
-    #    plot.plot_height = 400
-    
-    #x =  np.array(mydf.index)*1000*60*60 # Convert ms to hours
-    
-    #x = range(int(hours[0]),int(hours[1] + 1)) 
-    #y = TypicalDay(mydf).iloc[:, counter].astype(float)
-    #x = np.array(range(int(hours[0]),int(hours[1] + 1)))*7
-        
+   
     source.data = dict(x=x, y=y)
     
 for w in [ViewDropdown, HourSlider, DaylightSlider, RainSlider, CounterDropdown]:

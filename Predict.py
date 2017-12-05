@@ -177,11 +177,9 @@ def PlotSecularTrend(Models, counterNumber):
                   + str(GrowthRate) + "% Trailing Annual Growth Rate")
     plt.show()
     return
-    
 
-PlotCounterForecast(3)
 
 Models = CreateModels()
 ForecastTable, Forecasts = GetForecastTable(Models, days = 7)
-PlotTrendAnalysis(Models, counterNumber = 10)
+#PlotTrendAnalysis(Models, counterNumber = 10)
 #PlotHistoricalModel(Models, counterNumber = 3)
