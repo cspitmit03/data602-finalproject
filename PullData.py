@@ -2,10 +2,7 @@ import urllib.request, json
 import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
-import calendar
-from fbprophet import Prophet
 import matplotlib.pyplot as plt
-import holidays
 # from pd.io.json import json_normalize
 
 # Dictionary of Counters and their JSON file location
@@ -28,40 +25,6 @@ Counters.sort()
 PBColOrder = ["Date","BTotal", "PBTotal", "PedNB", "PedSB", "BikeNB", "BikeSB"]
 
 plt.style.use('fivethirtyeight')
-
-'''
-# Grab the datasets
-weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
-weatherDF = pd.read_csv(weatherPath, index_col = 0)
-Indx = [] # Index to house dates
-for i in range(len(weatherDF)): 
-    Indx.append(datetime.strptime(weatherDF.index[i], '%Y-%m-%d').date())
-weatherDF.index = Indx
-
-
-
-totalPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/TotalDF.csv"
-totalDF = pd.read_csv(totalPath)
-
-dailyPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/dailyDF.csv"
-dailyDF = pd.read_csv(dailyPath)
-dailyDF.index = dailyDF["Date"]
-del dailyDF["Date"]
-
-Indx = [] # Index to house dates
-for i in range(len(dailyDF)): 
-    Indx.append(datetime.strptime(dailyDF.index[i], '%Y-%m-%d').date())
-dailyDF.index = Indx
-
-
-sunsAndBoolsDF = getSunsAndBools()
-
-FremontDF = pd.concat([dailyDF["Fremont"], sunsAndBoolsDF, weatherDF], axis = 1)
-
-FremontPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\FremontAndPredictors.csv"
-        
-FremontDF.to_csv(FremontPath)
-'''    
 
 # Get JSON files of a single counter; 
 # "counter" is the name of a counter, a string, like "BGT"
@@ -219,51 +182,7 @@ def getDailyDF(df):
     
     return df
 
-def getSunsAndBools(end = datetime(2017, 10, 31)):
-
-    # Create a list containing all dates
-    start = datetime(2012, 10, 3) # First day of data
-    duration = (end - start).days + 1 # length of duration in days
-    
-    dateList = []
-    for i in range(duration):
-        dateList.append((start + timedelta(days=i)).date())
-        
-    axis = 23.44
-    latitude = 47.61
-    
-    # Given start and end dates, return an array containing the hours of sunlight
-    # for each date
-    sunlight = []
-    for i in range(duration):
-        day = (dateList[i] - pd.datetime(2000, 12, 21).date()).days # difference in days
-        day %= 365.25
-        m = 1. - np.tan(np.radians(latitude)) * np.tan(np.radians(axis) * np.cos(day * np.pi / 182.625))
-        m = max(0, min(m, 2))
-        sunlight.append(24. * np.degrees(np.arccos(1 - m)) / 180.)
-    
-    # Create boolean columns for each day of the week
-    weekend = []
-    for i in range(duration):
-        weekend.append((dateList[i].weekday() == 5 or dateList[i].weekday() == 6))
-    
-    # Create a boolean isMay, because May is bike to work month, and may have 
-    # additional ridership as a result, aside from other factors    
-    isMay = []
-    for i in range(duration):
-        isMay.append(dateList[i].month == 5) # True if in May, otherwise false
-    
-    SunsAndBools = pd.DataFrame({'Sunlight': sunlight,
-                                'isMay': isMay,
-                                'Weekend': weekend}, index = dateList)
-    
-    # Sunlight code is courtesy of Jake Vanderplas, an astronomy PHD who literally wrote 
-    # the book on data science for Python, and also investigated Seattle cycling: 
-    # http://jakevdp.github.io/blog/2014/06/10/is-seattle-really-seeing-an-uptick-in-cycling/
-    
-    return SunsAndBools
-
-def update():
+def updatePredictorsDF():
     raw = getRawData()
     dfList = []
     for i in range(len(raw)):
@@ -271,7 +190,6 @@ def update():
     totalDF = modifyData(dfList) # Put list of lists into single dataframe
     totalDF = markNulls(totalDF) # Replace nulls with imputed values
     dailyDF = getDailyDF(totalDF) # Convert hourly to weekly data
-    daylightDF = getSunsAndBools() # Add daylight data and weekend indicator variable
     
     weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
     weatherDF = pd.read_csv(weatherPath, index_col = 0)
@@ -280,89 +198,31 @@ def update():
         Indx.append(datetime.strptime(weatherDF.index[i], '%Y-%m-%d').date())
     weatherDF.index = Indx
     
-    predictorsDF = pd.concat([dailyDF, daylightDF, weatherDF], axis = 1)
-    
-    # Create columns that indicate holidays and business days
-    WA_holidays = holidays.UnitedStates(state = "WA") # Create list of holidays
-    Holiday = []
-    for i in range(len(predictorsDF.index)): 
-        Holiday.append(predictorsDF.index[i] in WA_holidays)
-    predictorsDF["Holiday"] = Holiday # Mark day as holidays
-    predictorsDF["BusinessDay"] = ((predictorsDF.Weekend == False) & (predictorsDF.Holiday == False))
-    
-    # Create a column that is number of week in dataset, for a secular trend
-    # e.g. that cycling is changing in volume over time, in addition to other
-    # factors. Also create a Friday column, as Fridays may see reduced ridership 
-    # as the weekend approaches
-    WeekNumber = []
-    Friday = []
-    for i in range(len(predictorsDF.index)):
-        WeekNumber.append(int(i/7))
-        Friday.append(predictorsDF.index[i] == 4)
-    predictorsDF["WeekNumber"] = WeekNumber
-    predictorsDF["Friday"] = Friday
-    
-    
-    
+    predictorsDF = pd.concat([dailyDF, weatherDF], axis = 1)
+           
     predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
     predictorsDF.to_csv(predPath)
     
     return
 
 # Update Bike Counts (to be performed monthly, followed by a push to github)
-def updateData():
+def updateHistDF():
     
     # Pull data from Seattle data portal, then write to local Github repo
+    # Counts in this DF are not edited; they are used for historical viewing
     raw = getRawData()
     dfList = []
     for i in range(len(raw)):
         dfList.append(raw[i].copy(deep = True))
-    totalDF = modifyData(dfList)
-    dailyDF = getDailyDF(totalDF)
-    
-    totalPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\totalDF.csv"
-    dailyPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\dailyDF.csv"
-    
-    totalDF.to_csv(totalPath)
-    dailyDF.to_csv(dailyPath)
-    
-    totalDF = pd.read_csv(totalPath)
-    
-    # Update weatherCSV manually, then add dummy variables
-    # Manually scrape WeatherUndeground for most recent full month 
-    # from WeatherURL
-    now = datetime.now()
-    if now.month == 1: 
-        lastMonth = 12
-        year = now.year - 1
-    else: 
-        lastMonth = now.month - 1
-        year = now.year
-    daysInMonth = calendar.monthrange(year, lastMonth)[1]
-    WeatherURL =  "https://www.wunderground.com/history/airport/KBFI/" + str(year) + "/" + str(lastMonth) + "/1/CustomHistory.html?dayend=" + str(daysInMonth) + "&monthend=" + str(lastMonth) + "&yearend=" + str(year) + "&req_city=&req_state=&req_statename=&reqdb.zip=&reqdb.magic=&reqdb.wmo="
-    print(WeatherURL)
-    
-    weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\weatherDF.csv"
-    weatherDF = pd.read_csv(weatherPath, index_col = 0)
-    weatherDF.to_csv(weatherDummyPath)
-    
+    histDF = modifyData(dfList)
+    histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\histDF.csv"
+    histDF.to_csv(histPath)
+ 
     return
 
-def get10DayForecast():
-    URL = "http://api.wunderground.com/api/91468d8e9a46ecc5/forecast10day/q/WA/Seattle.json"
-    with urllib.request.urlopen(URL) as url:
-        forecastList = json.loads(url.read().decode())["forecast"]["simpleforecast"]["forecastday"]
+def getDaylightList(end = datetime(2017, 11, 30)):
+    # ^Put in last day of previous month
     
-    
-    for i in range(len(forecastList)):
-        del forecastList[i]["date"]
-    
-def weeklyDF(dailyDF):
-    # Converts dataframe of daily counts to rolling weekly average
-    return dailyDF.rolling(window = 7).mean()
-
-def updateDaylightCSV(end = datetime(2017, 10, 31)):
-
     # Create a list containing all dates
     start = datetime(2012, 10, 3) # First day of data
     duration = (end - start).days + 1 # length of duration in days
@@ -383,18 +243,41 @@ def updateDaylightCSV(end = datetime(2017, 10, 31)):
         m = 1. - np.tan(np.radians(latitude)) * np.tan(np.radians(axis) * np.cos(day * np.pi / 182.625))
         m = max(0, min(m, 2))
         daylight.append(24. * np.degrees(np.arccos(1 - m)) / 180.)
-    
-    daylightDF =  pd.DataFrame(data = {'daylightHours': daylight}, 
-                               index = dateList)
-    daylightDF.index.name = "Date"
-    daylightDF.to_csv("daylightDF.csv")
         
-    return 
-        
-        
-#weeklyDF = dailyDF.rolling(window = 30).mean()
-#ax = weeklyDF.plot(figsize=(12, 8))
-#ax.set_ylabel('Monthly Number of Airline Passengers')
-#ax.set_xlabel('Date')
+    return daylight
 
-#plt.show()
+def addDaylightToWeatherCSV():
+    # Get weatherDF
+    weatherPath = r"https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
+    weatherDF = pd.read_csv(weatherPath, index_col = 0)
+    
+    # Replace index with datestamps
+    Indx = [] # Index to house dates
+    for i in range(len(weatherDF)): 
+        Indx.append(datetime.strptime(weatherDF.index[i], '%Y-%m-%d').date())
+    weatherDF.index = Indx
+
+    # Put in hours of daylight per day column
+    daylightHours = getDaylightList()
+    weatherDF["daylightHours"] = daylightHours
+    
+    # Write to hard drive
+    weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\weatherDF.csv"
+    weatherDF.to_csv(weatherPath)
+    
+    return
+
+def updateAll():
+    
+    # To update code:
+    
+    # Manually update the weather CSV using URL below, and adjust for month
+    # https://www.wunderground.com/history/airport/KBFI/2017/12/4/CustomHistory.html?&reqdb.zip=&reqdb.magic=&reqdb.wmo=
+    
+    # Add the daylight hours
+    addDaylightToWeatherCSV()
+    
+    updateHistDF()
+    updatePredictorsDF()
+    
+    return
