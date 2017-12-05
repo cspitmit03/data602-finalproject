@@ -4,18 +4,39 @@ from datetime import datetime, timedelta
 from fbprophet import Prophet
 import matplotlib.pyplot as plt
 import seaborn as sns
-from bokeh.plotting import figure, show, output_file
-from bokeh.models import FuncTickFormatter
+from bokeh.plotting import figure, output_file #show
+from bokeh.models import FuncTickFormatter, ColumnDataSource, DataRange1d, Plot, LinearAxis, Grid
+from bokeh.layouts import widgetbox, layout
+from bokeh.io import curdoc
+from bokeh.models.widgets import Select
+from bokeh.models.glyphs import VBar
+
+import pickle
 
 
-predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
-#predPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/predictorsDF.csv"
+    
+
+
+#predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
+predPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/predictorsDF.csv"
 predictorsDF = pd.read_csv(predPath, index_col = 0)
 predictorsDF["logPrecip"] = np.log(predictorsDF["Precip"]+1) # Add a log(precipitation) column
 WeekdayNames = ['Monday', 'Tuesday', 'Weds', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 counterNames = ["Burke Gilman Trail", "Broad", "Elliot", "Fremont Bridge",
                 "MTS Trail", "NW 58th St", "2nd Ave", "Spokane St", 
                 "39th Ave", "26th Ave", "Total"]
+
+# Dictionary for converting full trail names to column numbers
+counterDict = {"Burke Gilman Trail":0,
+               "Broad": 1,
+               "Elliot": 2,
+               "Fremont Bridge": 3,
+               "MTS Trail": 4,
+               "NW 58th St": 5,
+               "2nd Ave": 6,
+               "Spokane St": 7,
+               "39th Ave": 8,
+               "26th Ave": 9}
 
 
 Indx = [] # Index to hold dates
@@ -53,6 +74,23 @@ def CreateModels():
         m.fit(df)
         Models.append(m)
         
+    return Models
+
+def CreatePickleModels():
+    Models = CreateModels()
+    for i in range(11):
+        filename = 'Models' + str(i) + '.pkl'
+        with open(filename, 'wb') as output:
+            pickle.dump(Models[i], output, pickle.HIGHEST_PROTOCOL)
+    return 
+
+def LoadPickleModels():
+    Models = []
+    for i in range(11): 
+        filename = 'Models' + str(i) + '.pkl'
+        with open(filename, 'rb') as input:
+            Models.append(pickle.load(input))
+            
     return Models
     
 # Create the dataframe to house the dates to predict, and their forecasted weather
@@ -93,8 +131,10 @@ def GetForecastTable(Models, days = 7):
     for i in range(10):
         Forecasts.append(Models[i].predict(future))
         ForecastTable[predictorsDF.columns[i]] = Forecasts[i]['yhat'].values# Create column for each counter forecast
-        
-    ForecastTable = int(round(ForecastTable))
+    
+    ForecastTable = round(ForecastTable)
+    pd.options.display.float_format = '{:,.0f}'.format
+    
     #ForecastTable.columns = counterNames
     ForecastTable[ForecastTable < 0 ] = 0
     return ForecastTable, Forecasts
@@ -205,12 +245,77 @@ def plotForecast(ForecastTable, counterNumber):
         return labels[tick];
     """ % label_dict)
 
-    show(p)
+    #show(p)
+    
     return p
 
 
 
-Models = CreateModels()
+Models = LoadPickleModels()
 ForecastTable, Forecasts = GetForecastTable(Models, days = 7)
-#PlotTrendAnalysis(Models, counterNumber = 10)
-#PlotHistoricalModel(Models, counterNumber = 3)
+
+
+
+# Set up data
+x =  [0,1,2,3,4,5,6]
+top = ForecastTable.iloc[:, 3]
+source = ColumnDataSource(data=dict(x=x, top=top))
+
+def plotBokeh(ymax = 800):
+    
+    dayNames = []
+    for i in range(ForecastTable.shape[0]): 
+        dayNames.append(WeekdayNames[ForecastTable.index[i].weekday()])
+
+    p = figure(plot_width=600, plot_height=400, 
+               title = "7 Day Bicycle Count Forecast")
+    glyph = VBar(x="x", top = "top", width=0.5, bottom=0,
+                 fill_color="DeepSkyBlue")
+    
+    p.add_glyph(source, glyph)
+    
+    label_dict = {}
+    for i, s in enumerate(dayNames):
+        label_dict[i] = s
+
+    p.xaxis.formatter = FuncTickFormatter(code="""
+        var labels = %s;
+        return labels[tick];
+    """ % label_dict)
+    
+    return p
+
+plot = plotBokeh()
+
+# Widgets section
+
+# Drop down for selecting viewing a typical week or typical day
+
+CounterDropdown = Select(title = "Select Counter", value = "Fremont Bridge", 
+                             options = counterNames)
+
+# Set up callbacks
+def update_data(attrname, old, new):
+
+    # Get the current slider values
+    counter = counterDict[CounterDropdown.value]
+    x =  [0,1,2,3,4,5,6] 
+    
+    top = ForecastTable.iloc[:, counter].astype(float)
+   
+    source.data = dict(x=x, top=top)
+    
+for w in [CounterDropdown]:
+    w.on_change('value', update_data)
+
+# Set up layouts and add to document
+inputs = widgetbox(CounterDropdown)
+
+
+lay = layout([
+        [inputs], 
+        [plot]
+        ])#, sizing_mode = 'fixed')
+#curdoc().add_root(row(inputs, plot, width=800))
+curdoc().add_root(lay)    
+curdoc().title = "7 Day Forecast"
