@@ -1,3 +1,4 @@
 cd C:\Users\asher\Documents\GitHub\data602-finalproject
 bokeh serve HistoricalDashboard.py --show
 
+bokeh serve Predict.py --show
