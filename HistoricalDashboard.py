@@ -38,9 +38,10 @@ weatherDict = {0:"None",
                4:"Thunderstorm"}
 
 # Get dataframe of historical observations, weather, and daylight hours
-histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
-weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
-
+#histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
+#weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
+histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\histDF.csv"
+weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\weatherDF.csv"
 
 histDF = pd.read_csv(histPath, index_col = 0) # From Seattle Data Portal
 weatherDF = pd.read_csv(weatherPath, index_col = 0) # From WeatherUnderground
@@ -203,7 +204,7 @@ def plotBokeh(ymax = 800):
     #                              22]*1000*60*60)) # x axis tick marks
     plot.xaxis.formatter = DatetimeTickFormatter(hours = ['%I %p'], 
                                                  days = ['%a'], 
-                                                 months = ['%b %Y']) 
+                                                 months = ['%b']) 
                                                  #years = ['%Y'])
     plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
     

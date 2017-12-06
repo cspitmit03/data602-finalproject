@@ -197,6 +197,7 @@ def updatePredictorsDF():
     for i in range(len(weatherDF)): 
         Indx.append(datetime.strptime(weatherDF.index[i], '%Y-%m-%d').date())
     weatherDF.index = Indx
+    weatherDF["logPrecip"] = np.log(weatherDF["Precip"] + 1)
     
     predictorsDF = pd.concat([dailyDF, weatherDF], axis = 1)
            
