@@ -16,6 +16,7 @@ RUN pip install --no-cache-dir pandas && \
     pip install pymongo && \
     pip install lxml && \
     pip install emoji && \
+    pip install fbprophet && \
     pip install bokeh
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
