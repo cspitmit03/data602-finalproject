@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Data602-Final Project Seattle Biking</title>
+
+        <!-- CSS -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Josefin+Sans:300,400|Roboto:300,400,500">
+        <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+        <link rel="stylesheet" href="assets/font-awesome/css/font-awesome.min.css">
+        <link rel="stylesheet" href="assets/css/animate.css">
+        <link rel="stylesheet" href="assets/css/style.css">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <!-- Favicon and touch icons -->
+        <link rel="shortcut icon" href="assets/ico/favicon.png">
+        <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/ico/apple-touch-icon-144-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/ico/apple-touch-icon-114-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
+
+    </head>
+
+    <body>
+
+		<!-- Top menu -->
+		<nav class="navbar navbar-inverse" role="navigation">
+			<div class="container">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#top-navbar-1">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="index.html">Data602-Final Project Seattle Biking</a>
+				</div>
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="collapse navbar-collapse" id="top-navbar-1">
+					<ul class="nav navbar-nav navbar-right">
+            <li><a href="index.html">Home</a></li>
+						<li><a href="descriptive.html">Historical Dashboard</a></li>
+						<li><a href="predictive.html">7-Day Forecast</a></li>
+						<li><a href="policy.html">The Future</a></li>
+						<li><a href="aboutus.html">Background</a></li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+
+        <!-- Top content -->
+        <div class="top-content">
+        	<div class="container">
+
+				<div class="row">
+					<div class="col-sm-12 text wow fadeInLeft">
+						<h1>Data 602 Final Project</h1>
+						<div class="description">
+							<p class="medium-paragraph">
+							</p>
+						</div>
+					</div>
+				</div>
+
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="features-container section-container">
+	        <div class="container">
+
+	            <div class="row">
+	                <div class="col-sm-12 features section-description wow fadeIn">
+	                    <h2>Background</h2>
+	                    <div class="divider-1"><div class="line"></div></div>
+	                </div>
+	            </div>
+
+	            <div class="row">
+	                <div class="col-sm-6 features-box wow fadeInLeft">
+	                	<div class="row">
+	                		<div class="col-sm-3 features-box-icon">
+	                			<i class="fa fa-map-o"></i>
+	                		</div>
+	                		<div class="col-sm-9">
+	                			<h3>Purpose</h3>
+		                    	<p>
+
+                      As people continue to flock to cities, the challenge of accommodating them grows.
+                      Congestion, pollution, affordability, public health and traffic deaths are all issues with which cities struggle.
+                      Cycling can be a partial solution, as a frugal, active form of transportation.  Consequently, cities like London, Paris, Beijing, and Mexico City  have sought to increase the number of people traveling by bicycle, as well as transit.
+                      Seattle is the fastest major growing city in the US. It has also placed ten ‘counters,’ devices that count by the hour the number of bicycles that have passed by. These counts are then uploaded each month to a public website. We sought to use this data to see whether cycling is increasing or decreasing, and how it varies throughout the day, week and year.
+                      Seattle has also recently allowed firms to deploy bikes on city streets, that can be rented by the half hour for $1. This service known as dockless bikeshare, and has become tremendously popular in China, where they are responsible for some 50 million rides a day, while the ‘Chinese Uber’ does 20 million rides a day. In Seattle, these bikes now number some 8,000, nearly as many as New York City’s successful Citibike program. The data retrieved might offer some insight on the impact of these services. However, these firms only began to operate in mid to late summer of 2017, so it may be too early to detect an effect; also, the bike traffic near the counters may not be representative of the city overall.
+                      The results are comprised of three elements:
+                      Trend Analysis: Plots of the underlying trends in the data, from each counter’s inception until the latest available record.
+                      After viewing and comparing the results of various forecasting methods, Facebook’s Prophet package for Python was used, along with the linear regressors of the daily temperature high and the logarithm of daily rainfall, as recorded by Weather Underground. The Bokeh package for Python was used to display interactive plots of historical counts.
+
+		                    	</p>
+	                		</div>
+	                	</div>
+	            </div>
+
+	            <div class="row">
+	                <div class="col-sm-6 features-box wow fadeInLeft">
+	                	<div class="row">
+	                		<div class="col-sm-3 features-box-icon">
+	                			<i class="fa fa-area-chart"></i>
+	                		</div>
+	                		<div class="col-sm-9">
+	                			<h3>Historical Dashboard</h3>
+		                    	<p>
+                          An interactive interface for viewing historical counts, with various selectors such as dates, hours of daylight, time, and weather.
+		                    	</p>
+	                		</div>
+	                	</div>
+	                </div>
+                  <div class="col-sm-6 features-box wow fadeInLeft">
+	                	<div class="row">
+	                		<div class="col-sm-3 features-box-icon">
+	                			<i class="fa fa-sun"></i>
+	                		</div>
+	                		<div class="col-sm-9">
+	                			<h3>7-Day Forecast</h3>
+		                    	<p>
+                          A forecast of the daily volume of bikes at each counter, for the next 7 days, based on the weather forecast and historical time-series trends.
+                          </p>
+	                		</div>
+	                	</div>
+	                </div>
+                  <div class="col-sm-6 features-box wow fadeInLeft">
+                    <div class="row">
+                      <div class="col-sm-3 features-box-icon">
+                        <i class="fa fa-sun"></i>
+                      </div>
+                      <div class="col-sm-9">
+                        <h3>Trend Analysis</h3>
+                          <p>
+                          Plots of the underlying trends in the data, from each counter’s inception until the latest available record.
+                          </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 features-box wow fadeInLeft">
+                    <div class="row">
+                      <div class="col-sm-3 features-box-icon">
+                        <i class="fa fa-sun"></i>
+                      </div>
+                      <div class="col-sm-9">
+                        <h3>Trend Analysis</h3>
+                          <p>
+                            After viewing and comparing the results of various forecasting methods, Facebook’s Prophet package for Python was used, along with the linear regressors of the daily temperature high and the logarithm of daily rainfall, as recorded by Weather Underground. <p>The Bokeh package for Python was used to display interactive plots of historical counts.
+                          </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 features-box wow fadeInLeft">
+                    <div class="row">
+                      <div class="col-sm-3 features-box-icon">
+                        <i class="fa fa-sun"></i>
+                      </div>
+                      <div class="col-sm-9">
+                        <h3>Students</h3>
+                          <p>
+                            Both Asher Meyers and Cesar Espitia are gruate students in the Data Science masters program at the CUNY School of Professional Studies.  They are both avid transportation junkies with interests in the policy aspects of urban planning.
+                            <p>
+                          </p>
+                      </div>
+                    </div>
+                  </div>
+	            </div>
+
+	        </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+	        <div class="container">
+	        	<div class="row">
+	        		<div class="col-sm-12 footer-copyright">
+                    	For educational purposes only.<p>
+                      Bicycle image from &copy; Charlie Clay 2010<p>
+                      Final project for Data 602 by Asher Meyers and Cesar Espitia.  Fall 2017.<p>
+                      All Rights Reserved.
+                    </div>
+                </div>
+	        </div>
+        </footer>
+
+
+        <!-- Javascript -->
+        <script src="assets/js/jquery-1.11.1.min.js"></script>
+        <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+        <script src="assets/js/jquery.backstretch.min.js"></script>
+        <script src="assets/js/wow.min.js"></script>
+        <script src="assets/js/retina-1.1.0.min.js"></script>
+        <script src="assets/js/scripts.js"></script>
+
+        <!--[if lt IE 10]>
+            <script src="assets/js/placeholder.js"></script>
+        <![endif]-->
+
+    </body>
+
+</html>
