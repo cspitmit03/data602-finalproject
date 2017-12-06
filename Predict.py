@@ -155,7 +155,6 @@ def PlotTrendAnalysis(Models, counterNumber = 10):
     
     forecast = Models[counterNumber].predict(future)
     Models[counterNumber].plot_components(forecast)
-    
     return
 
 def PlotHistoricalModel(Models, counterNumber = 10):
