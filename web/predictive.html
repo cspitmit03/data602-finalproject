@@ -41,6 +41,14 @@
           var scrollWidth = $('.tbl-content').width() - $('.tbl-content table').width();
           $('.tbl-header').css({'padding-right':scrollWidth});
         }).resize();
+        $('#pic-changer').change(function(){ //if the select value gets changed
+       var imageSource = $(this).find(':selected').data('picture'); //get the data from data-picture attribute
+       if(imageSource){ //if it has data
+          $('#image-location').html('<img src="'+imageSource+'">'); // insert image in div image-location
+       } else {
+          $('#image-location').html(''); //remove content from div image-location, thus removing the image
+          }
+        })
         </script>
     </head>
 
@@ -101,7 +109,31 @@
                   <p><p>
                   <p><p>
                     <h3>Bicyle traffic trend in Seattle (Yearly, Weekly)</h3>
-                  <img src="../2.png" width=75%>
+                    The following is a list of trends for each Counter.  Please select one to see the changes.<br>
+
+                    <select id="dlist" onChange="swapImage()">
+                    <option value="">Select One</option>
+                    <option value="trend/BGT.jpg">BGT</option>
+                    <option value="trend/Broad.jpg">Broad</option>
+                    <option value="trend/Elliot.jpg">Elliot</option>
+                    <option value="trend/Fremont.jpg">Fremont</option>
+                    <option value="trend/MTS.jpg">MTS</option>
+                    <option value="trend/NW58.jpg">NW58</option>
+                    <option value="trend/Second.jpg">Second</option>
+                    <option value="trend/Spokane.jpg">Spokane</option>
+                    <option value="trend/Thirty.jpg">Thirty</option>
+                    <option value="trend/TwoSix.jpg">TwoSix</option>
+                    <option value="trend/Total.jpg">All Counters</option>
+                    </select>
+                    <br>
+                    <img id="imageToSwap" src="images/d.gif" / width=90%>
+                    <script type="text/javascript">
+                    function swapImage(){
+                    	var image = document.getElementById("imageToSwap");
+                    	var dropd = document.getElementById("dlist");
+                    	image.src = dropd.value;
+                    };
+                    </script>
                 </div>
               </div>
             </div>
