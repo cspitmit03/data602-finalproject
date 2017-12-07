@@ -201,7 +201,7 @@ def updatePredictorsDF():
     
     predictorsDF = pd.concat([dailyDF, weatherDF], axis = 1)
            
-    predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
+    #predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
     predictorsDF.to_csv(predPath)
     
     return
@@ -216,7 +216,7 @@ def updateHistDF():
     for i in range(len(raw)):
         dfList.append(raw[i].copy(deep = True))
     histDF = modifyData(dfList)
-    histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\histDF.csv"
+    #histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\histDF.csv"
     histDF.to_csv(histPath)
  
     return
