@@ -203,7 +203,7 @@ def plotBokeh(ymax = 800):
     #                              22]*1000*60*60)) # x axis tick marks
     plot.xaxis.formatter = DatetimeTickFormatter(hours = ['%I %p'], 
                                                  days = ['%a'], 
-                                                 months = ['%b %Y']) 
+                                                 months = ['%b']) 
                                                  #years = ['%Y'])
     plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
     
