@@ -22,7 +22,7 @@ predPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/ma
 predictorsDF = pd.read_csv(predPath, index_col = 0)
 predictorsDF["logPrecip"] = np.log(predictorsDF["Precip"]+1) # Add a log(precipitation) column
 WeekdayNames = ['Monday', 'Tuesday', 'Weds', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-counterNames = ["Burke Gilman Trail", "Broad", "Elliot", "Fremont Bridge",
+counterNames = ["Burke Gilman Trail", "Broad", "Elliott", "Fremont Bridge",
                 "MTS Trail", "NW 58th St", "2nd Ave", "Spokane St", 
                 "39th Ave", "26th Ave", "Total"]
 
@@ -155,6 +155,7 @@ def PlotTrendAnalysis(Models, counterNumber = 10):
     
     forecast = Models[counterNumber].predict(future)
     Models[counterNumber].plot_components(forecast)
+    
     return
 
 def PlotHistoricalModel(Models, counterNumber = 10):

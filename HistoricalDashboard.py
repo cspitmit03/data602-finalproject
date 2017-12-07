@@ -38,9 +38,10 @@ weatherDict = {0:"None",
                4:"Thunderstorm"}
 
 # Get dataframe of historical observations, weather, and daylight hours
-histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
-weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
-
+#histPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/histDF.csv"
+#weatherPath = "https://raw.githubusercontent.com/cspitmit03/data602-finalproject/master/weatherDF.csv"
+histPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\histDF.csv"
+weatherPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\weatherDF.csv"
 
 histDF = pd.read_csv(histPath, index_col = 0) # From Seattle Data Portal
 weatherDF = pd.read_csv(weatherPath, index_col = 0) # From WeatherUnderground
