@@ -49,7 +49,7 @@ weatherDF = pd.read_csv(weatherPath, index_col = 0) # From WeatherUnderground
 # Set indices of hist and weather as datetime & date objects, respectively
 Indx = [] # Index to house dates
 for i in range(len(histDF)): 
-    Indx.append(datetime.strptime(histDF.index[i], '%m/%d/%Y %H:%M'))
+    Indx.append(datetime.strptime(histDF.index[i], '%Y-%m-%d %H:%M:%S'))
 histDF.index = Indx
 #histDF.index = histDF.index.to_pydatetime()
 

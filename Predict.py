@@ -29,14 +29,15 @@ counterNames = ["Burke Gilman Trail", "Broad", "Elliott", "Fremont Bridge",
 # Dictionary for converting full trail names to column numbers
 counterDict = {"Burke Gilman Trail":0,
                "Broad": 1,
-               "Elliot": 2,
+               "Elliott": 2,
                "Fremont Bridge": 3,
                "MTS Trail": 4,
                "NW 58th St": 5,
                "2nd Ave": 6,
                "Spokane St": 7,
                "39th Ave": 8,
-               "26th Ave": 9}
+               "26th Ave": 9,
+               "Total": 10}
 
 
 Indx = [] # Index to hold dates
@@ -128,7 +129,7 @@ def GetForecastTable(Models, days = 7):
     # interval, trend components, and other statistical information about the model
     Forecasts = []
     ForecastTable = pd.DataFrame({}, index = date_list)
-    for i in range(10):
+    for i in range(11):
         Forecasts.append(Models[i].predict(future))
         ForecastTable[predictorsDF.columns[i]] = Forecasts[i]['yhat'].values# Create column for each counter forecast
     
