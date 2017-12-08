@@ -91,7 +91,6 @@ def LoadPickleModels():
         filename = 'Models' + str(i) + '.pkl'
         with open(filename, 'rb') as input:
             Models.append(pickle.load(input))
-            
     return Models
     
 # Create the dataframe to house the dates to predict, and their forecasted weather
@@ -121,7 +120,7 @@ def GetForecastTable(Models, days = 7):
                           'logPrecip': logPrecip,
                           'ds': date_list,
                           'floor': 0,
-                          'cap': max(predictorsDF["Fremont"])},
+                          'cap': max(predictorsDF["Total"])},
                          index = list(range(days)))
     
     # Create table of forecasts
