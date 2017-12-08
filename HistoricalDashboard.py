@@ -58,6 +58,8 @@ for i in range(len(weatherDF)):
     Indx.append(datetime.strptime(weatherDF.index[i], '%Y-%m-%d').date())
 weatherDF.index = Indx
 
+weatherDF["Precip"] = pd.to_numeric(weatherDF["Precip"])
+
 MyTools = "pan,hover,wheel_zoom,box_zoom,reset,undo,save"
 
 def subsetMonth(monthList, df=histDF):
