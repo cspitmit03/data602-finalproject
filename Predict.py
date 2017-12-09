@@ -5,14 +5,14 @@ from fbprophet import Prophet
 import matplotlib.pyplot as plt
 import seaborn as sns
 from bokeh.plotting import figure, output_file #show
-from bokeh.models import FuncTickFormatter, ColumnDataSource, DataRange1d, Plot, LinearAxis, Grid
+from bokeh.models import FuncTickFormatter, Range1d, LinearAxis, ColumnDataSource, DataRange1d, Plot, LinearAxis, Grid
 from bokeh.layouts import widgetbox, layout
 from bokeh.io import curdoc
 from bokeh.models.widgets import Select
-from bokeh.models.glyphs import VBar
+from bokeh.models.glyphs import VBar, Line
+import os
 
 import pickle
-
 
     
 
@@ -86,13 +86,17 @@ def CreatePickleModels():
     return 
 
 def LoadPickleModels():
+    dir_path = os.path.dirname(os.path.realpath('Predict.py'))
+    os.chdir(dir_path)
+    
     Models = []
     for i in range(11): 
         filename = 'Models' + str(i) + '.pkl'
         with open(filename, 'rb') as input:
             Models.append(pickle.load(input))
+            
     return Models
-    
+
 # Create the dataframe to house the dates to predict, and their forecasted weather
 
 # Get a table of forecasts for the next X days, where x is an integer between 1
@@ -137,7 +141,7 @@ def GetForecastTable(Models, days = 7):
     
     #ForecastTable.columns = counterNames
     ForecastTable[ForecastTable < 0 ] = 0
-    return ForecastTable, Forecasts
+    return ForecastTable, Forecasts, future
 
 def PlotTrendAnalysis(Models, counterNumber = 10):
     # Plots the historical trends as detected by the model
@@ -249,17 +253,25 @@ def plotForecast(ForecastTable, counterNumber):
     
     return p
 
-
-
 Models = LoadPickleModels()
-ForecastTable, Forecasts = GetForecastTable(Models, days = 7)
+#Models = CreateModels()
+ForecastTable, Forecasts, WeatherTable = GetForecastTable(Models, days = 7)
+WeatherTable['Precip'] = np.exp(WeatherTable.logPrecip) - 1
 
+daylist = []
+for i in range(len(WeatherTable)): 
+    dayNumber = WeatherTable.ds[i].weekday()
+    dayName = WeekdayNames[dayNumber]
+    daylist.append(dayName)
+WeatherTable['Weekday'] = daylist
+WeatherTable = WeatherTable.iloc[:, [0, 5, 6]]
 
 
 # Set up data
 x =  [0,1,2,3,4,5,6]
 top = ForecastTable.iloc[:, 3]
-source = ColumnDataSource(data=dict(x=x, top=top))
+#y = WeatherTable.Precip.values
+source = ColumnDataSource(data=dict(x=x, top=top)) #, y=y))
 
 def plotBokeh(ymax = 800):
     
@@ -269,6 +281,9 @@ def plotBokeh(ymax = 800):
 
     p = figure(plot_width=600, plot_height=400, 
                title = "7 Day Bicycle Count Forecast")
+    
+
+    # Count forecasts
     glyph = VBar(x="x", top = "top", width=0.5, bottom=0,
                  fill_color="DeepSkyBlue")
     
@@ -282,6 +297,23 @@ def plotBokeh(ymax = 800):
         var labels = %s;
         return labels[tick];
     """ % label_dict)
+    
+    # Add second y axis, for rainfall
+    #p.extra_y_ranges = {"Rainfall": Range1d(start = 0, end = 1)}
+    
+    # Adding the second axis to the plot.  
+    #p.add_layout(LinearAxis(y_range_name="Rainfall"), 'right')
+
+    #y = p.y_range.end * WeatherTable.Precip.values
+    # Rainfall
+    #rainGlyph = Line(x="x", y = y, source=source,
+    #                 line_color = "blue", line_width=3, line_alpha=0.6)  
+                     #y_range_name = "Rainfall")
+    
+    
+    #p.add_glyph(source, rainGlyph)
+    
+
     
     return p
 
@@ -302,8 +334,9 @@ def update_data(attrname, old, new):
     x =  [0,1,2,3,4,5,6] 
     
     top = ForecastTable.iloc[:, counter].astype(float)
+    y = WeatherTable.Precip.values
    
-    source.data = dict(x=x, top=top)
+    source.data = dict(x=x, top=top) #, y=y)
     
 for w in [CounterDropdown]:
     w.on_change('value', update_data)
