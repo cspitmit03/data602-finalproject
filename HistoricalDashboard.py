@@ -232,7 +232,7 @@ YearBoxes = CheckboxButtonGroup(labels = ["2012","'13", "'14", "'15", "'16",
 MonthBoxes = CheckboxButtonGroup(labels = ["Jan", "Feb", "March", "April", 
                                            "May", "June", "July", "Aug", "Sep",
                                            "Oct", "Nov", "Dec"], 
-                                 active = list(range(12)))
+                                 active = list(range(1,13)))
 WeekdayBoxes = CheckboxButtonGroup(labels = ["Mo", "Tu", "We",
                                               "Th", "Fr", "Sa",
                                               "Su"], 
