@@ -258,8 +258,8 @@ def plotForecast(ForecastTable, counterNumber):
     
     return p
 
-Models = CreateModels()
-#Models = LoadPickleModels()
+#Models = CreateModels()
+Models = LoadPickleModels()
 ForecastTable, Forecasts, WeatherTable = GetForecastTable(Models, days = 7)
 logPrecip, TempHi = GetWeather()
 Precip = list(np.exp(logPrecip)-1)
@@ -274,7 +274,7 @@ source = ColumnDataSource(data=dict(x=x, top=top, y=y))
 def plotBokeh(ymax = 800):
     
     dayNames = []
-    for i in range(ForecastTable.shape[0]): 
+    for i in range(7): 
         dayNames.append(WeekdayNames[ForecastTable.index[i].weekday()])
 
     p = figure(plot_width=650, plot_height=450, 
