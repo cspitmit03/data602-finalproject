@@ -5,16 +5,14 @@ from fbprophet import Prophet
 import matplotlib.pyplot as plt
 import seaborn as sns
 from bokeh.plotting import figure, output_file #show
-from bokeh.models import FuncTickFormatter, Range1d, LinearAxis, ColumnDataSource, DataRange1d, Plot, LinearAxis, Grid
+from bokeh.models import FuncTickFormatter, ColumnDataSource, DataRange1d, Plot,Range1d, LinearAxis, Grid
 from bokeh.layouts import widgetbox, layout
 from bokeh.io import curdoc
 from bokeh.models.widgets import Select
-from bokeh.models.glyphs import VBar, Line
+#from bokeh.models.glyphs import VBar, Line
 import os
 
 import pickle
-
-    
 
 
 #predPath = r"C:\Users\asher\Documents\GitHub\data602-finalproject\predictorsDF.csv"
@@ -45,6 +43,8 @@ for i in range(len(predictorsDF)):
     # Convert strings containing dates (eg '2012-10-03') to date objects
     Indx.append(datetime.strptime(predictorsDF.index[i], '%Y-%m-%d').date())
 predictorsDF.index = Indx
+
+
 
 def CreateModels():
 # Create a list of Prophet forecasts, one series for each counter
@@ -97,6 +97,19 @@ def LoadPickleModels():
             
     return Models
 
+def GetWeather(days = 7):
+    # Get weather forecast data, to predict upcoming bike counts using weatherbit API, in Imperial measures.
+    ForecastURL= 'http://api.wunderground.com/api/91468d8e9a46ecc5/forecast10day/q/WA/Seattle.json'
+    forecastJSON = pd.read_json(ForecastURL) # Read in the JSON data from API call
+    logPrecip = [] # list to house rainfall forecasts
+    TempHi = []
+    for i in range(days): 
+        DayDict = forecastJSON.iloc[1, 0]['forecastday'][i] # Identify location in JSON where data appears
+        logPrecip.append(np.log(DayDict['qpf_allday']['in'] + 1)) # Add 1 to avoid log of zero
+        TempHi.append(int(DayDict['high']['fahrenheit'])) 
+        
+    return logPrecip, TempHi
+
 # Create the dataframe to house the dates to predict, and their forecasted weather
 
 # Get a table of forecasts for the next X days, where x is an integer between 1
@@ -109,15 +122,7 @@ def GetForecastTable(Models, days = 7):
     # Compute number of days since last date of actuals, in this case October 31, 2017
     #delt = (datetime.today().date() - datetime(2017, 10, 31).date()).days
     
-    # Get weather forecast data, to predict upcoming bike counts using weatherbit API, in Imperial measures.
-    ForecastURL= 'http://api.wunderground.com/api/91468d8e9a46ecc5/forecast10day/q/WA/Seattle.json'
-    forecastJSON = pd.read_json(ForecastURL) # Read in the JSON data from API call
-    logPrecip = [] # list to house rainfall forecasts
-    TempHi = []
-    for i in range(days): 
-        DayDict = forecastJSON.iloc[1, 0]['forecastday'][i] # Identify location in JSON where data appears
-        logPrecip.append(np.log(DayDict['qpf_allday']['in'] + 1)) # Add 1 to avoid log of zero
-        TempHi.append(int(DayDict['high']['fahrenheit'])) 
+    logPrecip, TempHi = GetWeather()
         
     # Create dataframe
     future = pd.DataFrame({'TempHi': TempHi,
@@ -253,25 +258,18 @@ def plotForecast(ForecastTable, counterNumber):
     
     return p
 
-#Models = LoadPickleModels()
-Models = CreateModels()
+#Models = CreateModels()
+Models = LoadPickleModels()
 ForecastTable, Forecasts, WeatherTable = GetForecastTable(Models, days = 7)
-WeatherTable['Precip'] = np.exp(WeatherTable.logPrecip) - 1
-
-daylist = []
-for i in range(len(WeatherTable)): 
-    dayNumber = WeatherTable.ds[i].weekday()
-    dayName = WeekdayNames[dayNumber]
-    daylist.append(dayName)
-WeatherTable['Weekday'] = daylist
-WeatherTable = WeatherTable.iloc[:, [0, 5, 6]]
-
+logPrecip, TempHi = GetWeather()
+Precip = list(np.exp(logPrecip)-1)
+#WeatherTable['Precip'] = np.exp(WeatherTable.logPrecip) - 1
 
 # Set up data
 x =  [0,1,2,3,4,5,6]
 top = ForecastTable.iloc[:, 3]
-#y = WeatherTable.Precip.values
-source = ColumnDataSource(data=dict(x=x, top=top)) #, y=y))
+y = Precip
+source = ColumnDataSource(data=dict(x=x, top=top, y=y))
 
 def plotBokeh(ymax = 800):
     
@@ -279,15 +277,29 @@ def plotBokeh(ymax = 800):
     for i in range(ForecastTable.shape[0]): 
         dayNames.append(WeekdayNames[ForecastTable.index[i].weekday()])
 
-    p = figure(plot_width=600, plot_height=400, 
-               title = "7 Day Bicycle Count Forecast")
+    p = figure(plot_width=650, plot_height=450, 
+               title = "Projected Bicycle Count & Rainfall")
     
 
     # Count forecasts
-    glyph = VBar(x="x", top = "top", width=0.5, bottom=0,
-                 fill_color="DeepSkyBlue")
+    #glyph = VBar(x="x", top = "top", width=0.5, bottom=0,
+    #             fill_color="DeepSkyBlue")
     
-    p.add_glyph(source, glyph)
+    p.vbar(x ="x", width = 0.4, bottom = 0, top ="top", source=source,
+           color = "Navy", legend = "Bike Count")
+    
+    #p.add_glyph(source, glyph)
+
+    
+    # Add second y axis, for rainfall
+    p.extra_y_ranges = {"Rainfall": Range1d(start = -0.05, end = 0.75)}
+    
+    # Add rainfall line
+    p.circle(x="x", y="y", color="Aqua", size = 15, #line_width = 2,
+           y_range_name="Rainfall", source=source, legend = "Rainfall (in)")
+    
+    # Adding the second axis to the plot.  
+    p.add_layout(LinearAxis(y_range_name="Rainfall"), 'right')
     
     label_dict = {}
     for i, s in enumerate(dayNames):
@@ -297,23 +309,6 @@ def plotBokeh(ymax = 800):
         var labels = %s;
         return labels[tick];
     """ % label_dict)
-    
-    # Add second y axis, for rainfall
-    #p.extra_y_ranges = {"Rainfall": Range1d(start = 0, end = 1)}
-    
-    # Adding the second axis to the plot.  
-    #p.add_layout(LinearAxis(y_range_name="Rainfall"), 'right')
-
-    #y = p.y_range.end * WeatherTable.Precip.values
-    # Rainfall
-    #rainGlyph = Line(x="x", y = y, source=source,
-    #                 line_color = "blue", line_width=3, line_alpha=0.6)  
-                     #y_range_name = "Rainfall")
-    
-    
-    #p.add_glyph(source, rainGlyph)
-    
-
     
     return p
 
@@ -334,9 +329,9 @@ def update_data(attrname, old, new):
     x =  [0,1,2,3,4,5,6] 
     
     top = ForecastTable.iloc[:, counter].astype(float)
-    #y = WeatherTable.Precip.values
+    y = Precip
    
-    source.data = dict(x=x, top=top) #, y=y)
+    source.data = dict(x=x, top=top, y=y)
     
 for w in [CounterDropdown]:
     w.on_change('value', update_data)
