@@ -3,6 +3,9 @@ FROM python:3.5
 WORKDIR /usr/src/app/bicycle
 ADD . /usr/src/app/bicycle
 
+ENV TZ=America/Los_Angeles
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 RUN apt-get update -qq && apt-get upgrade -y && \
    apt-get install -y --no-install-recommends \
        libatlas-base-dev gfortran\
