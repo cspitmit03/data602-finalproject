@@ -23,5 +23,4 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5006
 COPY . .
-CMD ["python", "/usr/src/app/bicycle/predict.py"]
 CMD ["bokeh", "serve", "/usr/src/app/bicycle/HistoricalDashboard.py", "/usr/src/app/bicycle/Predict.py"]
