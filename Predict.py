@@ -116,7 +116,7 @@ def GetWeather(days = 7):
 # and 10 inclusive
 def GetForecastTable(Models, days = 7):
 
-    thisDay = datetime.utcnow() - timedelta(hours=12) # subtract UTC time
+    thisDay = datetime.utcnow() - timedelta(hours=8) # subtract UTC time
     date_list = [(thisDay + timedelta(days=x)).date() for x in range(0, days)]
     
     # Compute number of days since last date of actuals, in this case October 31, 2017
