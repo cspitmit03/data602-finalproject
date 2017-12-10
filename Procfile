@@ -1,1 +1,1 @@
-web: gunicorn app:tornado_app -k tornado --log-level=DEBUG --log-file - -b 0.0.0.0:$PORT
+web: bokeh serve --port $PORT --host seattle-biking.herokuapp.com --address=0.0.0.0 --use-xheaders HistoricalDashboard.py Predict.py
