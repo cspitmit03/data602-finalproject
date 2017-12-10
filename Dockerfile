@@ -1,4 +1,4 @@
-FROM python:3.5
+FROM python:3.6
 
 WORKDIR /usr/src/app/bicycle
 ADD . /usr/src/app/bicycle
