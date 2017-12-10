@@ -258,8 +258,8 @@ def plotForecast(ForecastTable, counterNumber):
     
     return p
 
-#Models = CreateModels()
-Models = LoadPickleModels()
+Models = CreateModels()
+#Models = LoadPickleModels()
 ForecastTable, Forecasts, WeatherTable = GetForecastTable(Models, days = 7)
 logPrecip, TempHi = GetWeather()
 Precip = list(np.exp(logPrecip)-1)
