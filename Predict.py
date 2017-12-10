@@ -253,8 +253,8 @@ def plotForecast(ForecastTable, counterNumber):
     
     return p
 
-Models = LoadPickleModels()
-#Models = CreateModels()
+#Models = LoadPickleModels()
+Models = CreateModels()
 ForecastTable, Forecasts, WeatherTable = GetForecastTable(Models, days = 7)
 WeatherTable['Precip'] = np.exp(WeatherTable.logPrecip) - 1
 
@@ -334,7 +334,7 @@ def update_data(attrname, old, new):
     x =  [0,1,2,3,4,5,6] 
     
     top = ForecastTable.iloc[:, counter].astype(float)
-    y = WeatherTable.Precip.values
+    #y = WeatherTable.Precip.values
    
     source.data = dict(x=x, top=top) #, y=y)
     
