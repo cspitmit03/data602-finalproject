@@ -1,1 +1,0 @@
-web: bokeh serve --port $PORT --host seattle-biking.herokuapp.com --address=0.0.0.0 --use-xheaders HistoricalDashboard.py Predict.py
